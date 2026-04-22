@@ -8,6 +8,7 @@ from scipy.fft import fft, fftfreq
 from scipy import stats
 from collections import deque
 from datetime import datetime
+import os  # IMPORTANTE: adicionar esta importação
 
 from .models import Leitura, Motor
 
@@ -15,12 +16,133 @@ from .models import Leitura, Motor
 buffers = {}
 BUFFER_SIZE = 256  # 256 amostras para FFT
 
+# Arquivo para armazenar os offsets de calibração
+OFFSETS_FILE = 'offsets.json'
+
 
 # =========================
 # DASHBOARD
 # =========================
 def dashboard(request):
     return render(request, 'dashboard.html')
+
+
+# =========================
+# SALVAR OFFSETS DE CALIBRAÇÃO
+# =========================
+@csrf_exempt
+def salvar_offset(request):
+    """Salva os offsets de calibração de um motor no servidor"""
+    if request.method != 'POST':
+        return JsonResponse({'erro': 'somente POST'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        motor_id = data.get('motor_id')
+        offset_x = data.get('offset_x', 0)
+        offset_y = data.get('offset_y', 0)
+        offset_z = data.get('offset_z', 0)
+        
+        # Validar motor_id
+        if motor_id is None:
+            return JsonResponse({'erro': 'motor_id é obrigatório'}, status=400)
+        
+        # Carregar offsets existentes
+        offsets = {}
+        if os.path.exists(OFFSETS_FILE):
+            try:
+                with open(OFFSETS_FILE, 'r') as f:
+                    offsets = json.load(f)
+            except:
+                offsets = {}
+        
+        # Atualizar offsets do motor
+        offsets[str(motor_id)] = {
+            'offset_x': float(offset_x),
+            'offset_y': float(offset_y),
+            'offset_z': float(offset_z),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Salvar de volta
+        with open(OFFSETS_FILE, 'w') as f:
+            json.dump(offsets, f, indent=2)
+        
+        print(f"✅ Offsets do motor {motor_id} salvos: X={offset_x}, Y={offset_y}, Z={offset_z}")
+        
+        return JsonResponse({
+            'status': 'ok',
+            'mensagem': f'Offsets do motor {motor_id} salvos no servidor',
+            'offsets': {
+                'offset_x': offset_x,
+                'offset_y': offset_y,
+                'offset_z': offset_z
+            }
+        }, status=200)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'JSON inválido'}, status=400)
+    except Exception as e:
+        print(f"❌ Erro ao salvar offset: {str(e)}")
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+# =========================
+# CARREGAR OFFSETS DE CALIBRAÇÃO
+# =========================
+@csrf_exempt
+def carregar_offset(request, motor_id):
+    """Carrega os offsets de calibração de um motor do servidor"""
+    try:
+        # Verificar se o arquivo existe
+        if not os.path.exists(OFFSETS_FILE):
+            return JsonResponse({'erro': 'Nenhum offset salvo no servidor'}, status=404)
+        
+        # Carregar offsets
+        with open(OFFSETS_FILE, 'r') as f:
+            offsets = json.load(f)
+        
+        # Verificar se o motor existe
+        motor_key = str(motor_id)
+        if motor_key not in offsets:
+            return JsonResponse({'erro': f'Motor {motor_id} não tem offset salvo'}, status=404)
+        
+        offset_data = offsets[motor_key]
+        
+        print(f"📦 Offsets do motor {motor_id} carregados: X={offset_data['offset_x']}, Y={offset_data['offset_y']}, Z={offset_data['offset_z']}")
+        
+        return JsonResponse({
+            'status': 'ok',
+            'motor_id': motor_id,
+            'offset_x': offset_data['offset_x'],
+            'offset_y': offset_data['offset_y'],
+            'offset_z': offset_data['offset_z'],
+            'timestamp': offset_data.get('timestamp', '')
+        }, status=200)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'Arquivo de offsets corrompido'}, status=500)
+    except Exception as e:
+        print(f"❌ Erro ao carregar offset: {str(e)}")
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+# =========================
+# LISTAR TODOS OS OFFSETS (OPCIONAL - PARA DEBUG)
+# =========================
+@csrf_exempt
+def listar_offsets(request):
+    """Lista todos os offsets salvos (para debug)"""
+    try:
+        if not os.path.exists(OFFSETS_FILE):
+            return JsonResponse({'offsets': {}}, status=200)
+        
+        with open(OFFSETS_FILE, 'r') as f:
+            offsets = json.load(f)
+        
+        return JsonResponse({'offsets': offsets}, status=200)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
 
 
 # =========================
@@ -474,6 +596,11 @@ def motor_excluir(request, motor_id):
 
     try:
         motor = Motor.objects.get(id=motor_id)
+        
+        # Limpar buffer se existir
+        if motor_id in buffers:
+            del buffers[motor_id]
+        
         motor.delete()
 
         return JsonResponse({'mensagem': 'Motor excluído com sucesso'})
