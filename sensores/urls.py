@@ -8,6 +8,11 @@ urlpatterns = [
     # ==================== API DE LEITURAS (Sensores) ====================
     path('api/dados/', views.dados_json, name='dados_json'),
     path('api/receber/', views.receber_dados, name='receber_dados'),
+    path('api/receber_bruto/', views.receber_dados_brutos, name='receber_dados_brutos'),
+    
+    # ==================== API DE ANÁLISE AVANÇADA (SKF) ====================
+    path('api/analise/<int:motor_id>/', views.get_analise_completa, name='get_analise_completa'),
+    path('api/fft/<int:motor_id>/', views.get_fft_data, name='get_fft_data'),
     
     # ==================== API DE MOTORES (CRUD completo) ====================
     path('api/motores/', views.motores_listar, name='motores_listar'),                    # GET - listar todos
