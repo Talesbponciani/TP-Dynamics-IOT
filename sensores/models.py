@@ -11,14 +11,14 @@ class Motor(models.Model):
     cv = models.FloatField(default=0.0)  # potência em cavalos
 
     def __str__(self):
-        return f"[{self.id}] {self.nome} - {self.marca}"
+        return self.nome
 
 
 # =========================
 # MODELO DE LEITURA
 # =========================
 class Leitura(models.Model):
-    # Relação com motor
+    # 🔥 RELAÇÃO COM MOTOR (temporariamente opcional)
     motor = models.ForeignKey(Motor, on_delete=models.CASCADE, null=True, blank=True)
 
     data = models.DateTimeField(auto_now_add=True)
@@ -26,9 +26,5 @@ class Leitura(models.Model):
     vibX = models.FloatField()
     vibY = models.FloatField()
     vibZ = models.FloatField()
-    rms = models.FloatField()      # Agora armazena VELOCIDADE RMS em mm/s
+    rms = models.FloatField()
     crest = models.FloatField()
-
-    def __str__(self):
-        motor_nome = self.motor.nome if self.motor else "Sem motor"
-        return f"{self.data.strftime('%d/%m/%Y %H:%M:%S')} - {motor_nome} - Vel: {self.rms:.2f} mm/s"
