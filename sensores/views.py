@@ -3,12 +3,22 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 import json
 import math
-import numpy as np
-from scipy.fft import fft, fftfreq
-from scipy import stats
+import os
 from collections import deque
 from datetime import datetime
-import os
+from pathlib import Path
+
+# Tentar importar numpy e scipy, se não existir, usar fallback
+try:
+    import numpy as np
+    from scipy.fft import fft, fftfreq
+    from scipy import stats
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    # Fallback para quando scipy não estiver disponível
+    np = None
+    stats = None
 
 from .models import Leitura, Motor
 
@@ -20,8 +30,29 @@ BUFFER_SIZE = 50  # REDUZIDO para 50 amostras (começa a funcionar mais rápido)
 vel_buffers = {}
 VEL_BUFFER_SIZE = 50
 
-# Arquivo para offsets
-OFFSETS_FILE = 'offsets.json'
+# Arquivo para offsets - usar caminho absoluto dentro do projeto
+BASE_DIR = Path(__file__).resolve().parent.parent
+OFFSETS_FILE = BASE_DIR / 'offsets.json'
+
+
+def calcular_estatisticas_sem_scipy(amostras):
+    """Fallback para quando scipy não está disponível"""
+    if not amostras or len(amostras) == 0:
+        return {'rms': 0, 'kurtosis': 0}
+    
+    n = len(amostras)
+    media = sum(amostras) / n
+    variancia = sum((x - media) ** 2 for x in amostras) / n
+    rms = math.sqrt(variancia)
+    
+    # Kurtosis simplificado
+    if variancia > 0:
+        momento4 = sum((x - media) ** 4 for x in amostras) / n
+        kurtosis = momento4 / (variancia ** 2) - 3
+    else:
+        kurtosis = 0
+    
+    return {'rms': rms, 'kurtosis': kurtosis}
 
 
 def dashboard(request):
@@ -164,8 +195,16 @@ def receber_dados_brutos(request):
         pico = max(abs(vibX), abs(vibY), abs(vibZ))
         crest_factor = pico / rms_total if rms_total > 0 else 0
         
+        # Calcular kurtosis (com fallback)
         amostras = [vibX, vibY, vibZ]
-        kurtosis = stats.kurtosis(amostras, fisher=True) if np.std(amostras) > 0 else 0
+        if SCIPY_AVAILABLE and stats is not None:
+            if np.std(amostras) > 0:
+                kurtosis = stats.kurtosis(amostras, fisher=True)
+            else:
+                kurtosis = 0
+        else:
+            stats_calc = calcular_estatisticas_sem_scipy(amostras)
+            kurtosis = stats_calc['kurtosis']
         
         # Velocidade em mm/s (corrigida)
         vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000
@@ -250,6 +289,40 @@ def get_analise_completa(request, motor_id):
                 'amostras_atual': len(buffers.get(motor_id, {}).get('x', [])),
                 'amostras_necessarias': BUFFER_SIZE
             }, status=400)
+        
+        # Verificar se scipy está disponível
+        if not SCIPY_AVAILABLE or np is None:
+            # Retornar análise simplificada sem FFT
+            x_data_list = list(buffers[motor_id]['x'])
+            rms_total = math.sqrt(sum(v**2 for v in x_data_list) / len(x_data_list))
+            vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000
+            
+            # Severidade
+            if vel_rms < 1.0:
+                severidade = "Boa"
+                recomendacao = "Operacao normal"
+            elif vel_rms < 2.8:
+                severidade = "Aceitavel"
+                recomendacao = "Monitorar tendencia"
+            elif vel_rms < 4.5:
+                severidade = "Insatisfatoria"
+                recomendacao = "Planejar manutencao"
+            else:
+                severidade = "Perigosa"
+                recomendacao = "PARAR EQUIPAMENTO IMEDIATAMENTE"
+            
+            return JsonResponse({
+                'analise_basica': {
+                    'rms_total': round(rms_total, 3),
+                    'rms_mm_s': round(vel_rms, 2),
+                    'severidade': severidade,
+                    'recomendacao': recomendacao,
+                },
+                'diagnostico': {
+                    'recomendacao': recomendacao,
+                    'nivel_alerta': 'ALERTA' if vel_rms > 4.5 else 'NORMAL'
+                }
+            })
         
         # Converter para arrays numpy
         x_data = np.array(buffers[motor_id]['x'])
@@ -372,6 +445,14 @@ def get_analise_completa(request, motor_id):
 # =========================
 def get_fft_data(request, motor_id):
     try:
+        if not SCIPY_AVAILABLE or np is None:
+            return JsonResponse({
+                'erro': 'Biblioteca scipy/numpy não disponível para FFT',
+                'fft_data': [],
+                'freq_max': 0,
+                'amp_max': 0
+            })
+        
         if motor_id not in buffers or len(buffers[motor_id]['x']) < BUFFER_SIZE:
             return JsonResponse({
                 'erro': f'Amostras insuficientes para FFT. Aguardando mais dados...',
@@ -391,13 +472,13 @@ def get_fft_data(request, motor_id):
         dados_fft = []
         for i in range(1, len(freq)):
             if freq[i] <= 50:  # Limitar a 50 Hz para melhor visualização
-                dados_fft.append({'freq': round(freq[i], 1), 'amp': round(fft_x[i], 5)})
+                dados_fft.append({'freq': round(freq[i], 1), 'amp': round(float(fft_x[i]), 5)})
         
         # Encontrar frequência dominante (excluindo DC)
         if len(fft_x) > 1:
             idx_max = np.argmax(fft_x[1:]) + 1
             freq_max = freq[idx_max] if idx_max < len(freq) else 0
-            amp_max = fft_x[idx_max] if idx_max < len(fft_x) else 0
+            amp_max = float(fft_x[idx_max]) if idx_max < len(fft_x) else 0
         else:
             freq_max = 0
             amp_max = 0
