@@ -134,6 +134,21 @@
             padding: 6px;
             border-radius: 40px;
         }
+        .creator-credit {
+            position: fixed;
+            bottom: 12px;
+            right: 16px;
+            z-index: 1001;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: #f0f0f0;
+            font-family: monospace;
+            border: 1px solid rgba(255,255,200,0.2);
+            pointer-events: none;
+        }
         
         .dashboard-container, .custom-charts-container {
             display: none;
@@ -278,6 +293,9 @@
             justify-content: space-between;
         }
         .historico-tempo { font-family: monospace; font-weight: bold; color: #f39c12; }
+        .status-normal { color: #2ecc71; }
+        .status-alerta { color: #f1c40f; }
+        .status-critico { color: #e74c3c; }
         
         .card {
             background: rgba(30,30,30,0.75);
@@ -400,6 +418,9 @@
             font-size: 0.8rem;
             color: #ddd;
         }
+        .status-good { color: #2ecc71; }
+        .status-warning { color: #f39c12; }
+        .status-critical { color: #e74c3c; }
         .fft-container {
             margin-top: 20px;
             margin-bottom: 20px;
@@ -443,6 +464,12 @@
             color: white;
             font-size: 0.85rem;
         }
+        .add-chart-panel select {
+            min-width: 140px;
+        }
+        .add-chart-panel input {
+            min-width: 160px;
+        }
         .btn-add {
             background: #2ecc71;
             border: none;
@@ -483,6 +510,9 @@
             position: relative;
             transition: 0.2s;
         }
+        .custom-chart-card:hover {
+            border-color: rgba(255,255,200,0.4);
+        }
         .chart-header {
             display: flex;
             justify-content: space-between;
@@ -505,6 +535,22 @@
             flex-wrap: wrap;
             font-size: 0.7rem;
         }
+        .chart-config select, .chart-config input {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,200,0.3);
+            border-radius: 12px;
+            padding: 4px 8px;
+            color: white;
+            font-size: 0.7rem;
+        }
+        .chart-config label {
+            color: #ccc;
+            font-size: 0.7rem;
+        }
+        .chart-controls {
+            display: flex;
+            gap: 8px;
+        }
         .chart-controls button {
             background: rgba(0,0,0,0.5);
             border: none;
@@ -512,6 +558,7 @@
             padding: 4px 8px;
             cursor: pointer;
             font-size: 0.7rem;
+            transition: 0.2s;
         }
         .btn-remove-chart {
             color: #e74c3c;
@@ -520,12 +567,43 @@
             background: #e74c3c;
             color: white;
         }
+        .btn-edit-chart {
+            color: #f39c12;
+        }
+        .btn-edit-chart:hover {
+            background: #f39c12;
+            color: white;
+        }
+        .custom-canvas {
+            width: 100% !important;
+            max-height: 250px !important;
+        }
         .empty-charts {
             text-align: center;
             padding: 60px 20px;
             background: rgba(20,20,20,0.5);
             border-radius: 20px;
             color: #aaa;
+        }
+        .motor-filter {
+            background: rgba(0,0,0,0.4);
+            padding: 10px 15px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .motor-filter label {
+            font-size: 0.85rem;
+            color: #ccc;
+        }
+        .motor-filter select {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,200,0.3);
+            border-radius: 20px;
+            padding: 6px 12px;
+            color: white;
         }
         .motor-selector select {
             background: rgba(0,0,0,0.8);
@@ -534,6 +612,11 @@
             border-radius: 40px;
             color: #ffffff;
             cursor: pointer;
+            appearance: none;
+        }
+        .motor-selector select option {
+            background: #2c3e50;
+            color: #ffffff;
         }
         .motor-info {
             font-size: 0.7rem;
@@ -548,6 +631,19 @@
             background: rgba(0,0,0,0.5);
             border-radius: 20px;
             margin: 10px;
+        }
+        .copy-btn {
+            background: #3498db;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 12px;
+            margin-right: 5px;
+            cursor: pointer;
+            color: white;
+            font-size: 0.75rem;
+        }
+        .copy-btn:hover {
+            background: #2980b9;
         }
         .motor-id-badge {
             background: #f39c12;
@@ -579,13 +675,31 @@
             padding: 25px;
             width: 90%;
             max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
             border: 1px solid rgba(255,255,200,0.3);
             color: white;
+            animation: fadeInUp 0.3s ease;
         }
         .modal-content h2 {
             text-align: center;
             margin-bottom: 20px;
             color: #f39c12;
+            font-size: 1.3rem;
+        }
+        .modal-content label {
+            display: block;
+            margin: 10px 0 5px;
+            font-size: 0.85rem;
+        }
+        .modal-content input, .modal-content select {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,200,0.3);
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9rem;
         }
         .modal-buttons {
             display: flex;
@@ -608,6 +722,87 @@
             background: #e74c3c;
             color: white;
         }
+        .next-id-info {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            display: inline-block;
+        }
+        .alarm-motor-selector {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 16px;
+            margin-bottom: 15px;
+        }
+        .search-box {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 8px 35px 8px 12px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,200,0.3);
+            border-radius: 25px;
+            color: white;
+            font-size: 0.85rem;
+        }
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+        }
+        .motor-list {
+            max-height: 180px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,200,0.2);
+            border-radius: 12px;
+            background: rgba(0,0,0,0.3);
+        }
+        .motor-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,200,0.1);
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        .motor-item:hover {
+            background: rgba(52, 152, 219, 0.3);
+        }
+        .motor-item.selected {
+            background: rgba(46, 204, 113, 0.3);
+            border-left: 3px solid #2ecc71;
+        }
+        .selected-motor-display {
+            background: rgba(52, 152, 219, 0.3);
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .alarm-config-section {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,200,0.2);
+        }
+        .scale-config {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .scale-config input {
+            width: 80px;
+        }
         
         .footer-credit {
             position: fixed;
@@ -625,10 +820,26 @@
             pointer-events: none;
         }
         
+        .modal-footer-credit {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,200,0.2);
+            font-size: 0.7rem;
+            color: #aaa;
+            font-family: monospace;
+        }
+        
         @media (max-width: 800px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
+            .top-panel { flex-direction: column; }
+            .header { flex-direction: column; align-items: stretch; gap: 10px; }
+            .dropdown-content { right: auto; left: 0; }
+            .company-name { font-size: 1.5rem; }
             .charts-grid { grid-template-columns: 1fr; }
-            .footer-credit { font-size: 0.65rem; }
+            .chart-config { flex-direction: column; align-items: flex-start; }
+            .footer-credit { font-size: 0.65rem; padding: 4px 10px; }
+            .current-value { font-size: 0.65rem; top: 5px; right: 10px; }
+            .skf-metrics-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -664,9 +875,13 @@
                 <button class="menu-btn" id="menuBtn">☰ Menu</button>
                 <div class="dropdown-content" id="menuDropdown">
                     <a href="#" id="menuDashboard">📊 Dashboard Principal</a>
-                    <a href="#" id="menuCustomCharts">📈 Gráficos Personalizáveis</a>
-                    <a href="#" id="menuMotores">📋 Motores</a>
-                    <a href="#" id="menuLogout" style="color:#e74c3c;">🚪 Sair</a>
+                    <a href="#" id="menuCustomCharts">📈 Painel de Gráficos Personalizáveis</a>
+                    <a href="#" id="menuMotores">📋 Gerenciar Motores</a>
+                    <a href="#" id="menuConfig">⚙️ Configurações de Alarmes</a>
+                    <a href="#" id="menuExport">📁 Exportar Dados</a>
+                    <a href="#" id="menuAjuda">❓ Ajuda</a>
+                    <a href="#" id="menuSobre">ℹ️ Sobre</a>
+                    <a href="#" id="menuLogout" style="border-top: 1px solid rgba(255,255,200,0.2); color:#e74c3c;">🚪 Sair</a>
                 </div>
             </div>
         </div>
@@ -683,13 +898,47 @@
         <div class="historico-panel">
             <h3>📜 Histórico de Leituras</h3>
             <div class="historico-scroll">
-                <ul id="historicoLista" class="historico-lista"><li style="justify-content:center; color:#aaa;">⏳ Aguardando dados...</li></ul>
+                <ul id="historicoLista" class="historico-lista"><li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li></ul>
             </div>
         </div>
     </div>
 
+    <div class="skf-metrics-panel">
+        <h3 style="margin:0 0 10px 0;">🔬 Análise Avançada - Estilo SKF</h3>
+        <div class="skf-metrics-grid">
+            <div class="skf-metric-card">
+                <div class="label">Crest Factor</div>
+                <div class="value" id="skfCrest">--</div>
+                <div class="unit"></div>
+            </div>
+            <div class="skf-metric-card">
+                <div class="label">Kurtosis</div>
+                <div class="value" id="skfKurtosis">--</div>
+                <div class="unit">(normal &lt; 3)</div>
+            </div>
+            <div class="skf-metric-card">
+                <div class="label">Velocidade (ISO 10816)</div>
+                <div class="value" id="skfVelocity">--</div>
+                <div class="unit">mm/s</div>
+            </div>
+            <div class="skf-metric-card">
+                <div class="label">Frequência Dominante</div>
+                <div class="value" id="skfFreq">--</div>
+                <div class="unit">Hz</div>
+            </div>
+            <div class="skf-metric-card">
+                <div class="label">Severidade</div>
+                <div class="value" id="skfSeveridade">--</div>
+                <div class="unit"></div>
+            </div>
+        </div>
+        <div class="diagnostic-box" id="skfDiagnostico">
+            🔍 Aguardando dados para análise...
+        </div>
+    </div>
+
     <div id="noDataMessage" class="no-data-message" style="display: none;">
-        ⚠️ Selecione um motor para visualizar os dados.
+        ⚠️ Nenhum dado recebido do ESP32. Aguardando primeira leitura...
     </div>
 
     <div class="dashboard-grid">
@@ -700,24 +949,30 @@
         </div>
         <div class="chart-container">
             <div class="current-value" id="rmsValue">-- mm/s</div>
-            <h3>📊 Velocidade RMS (mm/s)</h3>
+            <h3>📊 Velocidade RMS (mm/s) - ISO 20816-3</h3>
             <canvas id="rmsChart"></canvas>
         </div>
         <div class="chart-container">
             <div class="current-value" id="horizontalValue">-- m/s²</div>
-            <h3>🔵 Horizontal X (m/s²)</h3>
+            <h3>🔵 Horizontal X (Aceleração - m/s²)</h3>
             <canvas id="horizontalChart"></canvas>
         </div>
         <div class="chart-container">
             <div class="current-value" id="verticalValue">-- m/s²</div>
-            <h3>🟠 Vertical Z (m/s²)</h3>
+            <h3>🟠 Vertical Z (Aceleração - m/s²)</h3>
             <canvas id="verticalChart"></canvas>
         </div>
         <div class="chart-container">
             <div class="current-value" id="axialValue">-- m/s²</div>
-            <h3>🟢 Axial Y (m/s²)</h3>
+            <h3>🟢 Axial Y (Aceleração - m/s²)</h3>
             <canvas id="axialChart"></canvas>
         </div>
+    </div>
+
+    <div class="chart-container fft-container">
+        <h3>🎵 Espectro de Frequências (FFT) - Análise de Vibração</h3>
+        <canvas id="fftChart" style="max-height: 250px;"></canvas>
+        <div id="fftStatus" style="text-align:center; color:#aaa; font-size:0.7rem; margin-top:8px;">⏳ Aguardando amostras para FFT...</div>
     </div>
 </div>
 
@@ -729,9 +984,13 @@
             <button class="menu-btn" id="menuBtn2">☰ Menu</button>
             <div class="dropdown-content" id="menuDropdown2">
                 <a href="#" id="menuDashboard2">📊 Dashboard Principal</a>
-                <a href="#" id="menuCustomCharts2">📈 Gráficos Personalizáveis</a>
-                <a href="#" id="menuMotores2">📋 Motores</a>
-                <a href="#" id="menuLogout2" style="color:#e74c3c;">🚪 Sair</a>
+                <a href="#" id="menuCustomCharts2">📈 Painel de Gráficos Personalizáveis</a>
+                <a href="#" id="menuMotores2">📋 Gerenciar Motores</a>
+                <a href="#" id="menuConfig2">⚙️ Configurações de Alarmes</a>
+                <a href="#" id="menuExport2">📁 Exportar Dados</a>
+                <a href="#" id="menuAjuda2">❓ Ajuda</a>
+                <a href="#" id="menuSobre2">ℹ️ Sobre</a>
+                <a href="#" id="menuLogout2" style="border-top: 1px solid rgba(255,255,200,0.2); color:#e74c3c;">🚪 Sair</a>
             </div>
         </div>
     </div>
@@ -751,11 +1010,30 @@
             <label>📈 Variável</label>
             <select id="newChartVariable">
                 <option value="temperatura">🌡️ Temperatura</option>
-                <option value="velocidade_mm_s">📊 Velocidade RMS</option>
-                <option value="vibX">🔵 Horizontal X</option>
-                <option value="vibY">🟢 Axial Y</option>
-                <option value="vibZ">🟠 Vertical Z</option>
+                <option value="rms">📊 Velocidade RMS (mm/s)</option>
+                <option value="vibX">🔵 Horizontal X (m/s²)</option>
+                <option value="vibY">🟢 Axial Y (m/s²)</option>
+                <option value="vibZ">🟠 Vertical Z (m/s²)</option>
             </select>
+        </div>
+        <div>
+            <label>🎨 Cor</label>
+            <select id="newChartColor">
+                <option value="#e67e22">Laranja</option>
+                <option value="#3498db">Azul</option>
+                <option value="#2ecc71">Verde</option>
+                <option value="#e74c3c">Vermelho</option>
+                <option value="#9b59b6">Roxo</option>
+                <option value="#f1c40f">Amarelo</option>
+            </select>
+        </div>
+        <div>
+            <label>📏 Escala Mín</label>
+            <input type="number" id="newChartMin" step="0.1" placeholder="Auto" style="width:70px;">
+        </div>
+        <div>
+            <label>📏 Escala Máx</label>
+            <input type="number" id="newChartMax" step="0.1" placeholder="Auto" style="width:70px;">
         </div>
         <div>
             <button class="btn-add" id="addChartBtn">+ Adicionar Gráfico</button>
@@ -764,24 +1042,124 @@
     </div>
 
     <div id="chartsGrid" class="charts-grid">
-        <div class="empty-charts">📊 Nenhum gráfico adicionado. Clique em "+ Adicionar Gráfico" para começar!</div>
+        <div class="empty-charts">
+            📊 Nenhum gráfico adicionado ainda.<br>
+            Clique em "+ Adicionar Gráfico" para começar!
+        </div>
     </div>
 </div>
 
 <!-- Modais -->
-<div id="motoresModal" class="modal">
+<div id="configModal" class="modal">
     <div class="modal-content">
+        <h2>⚙️ Configurar Alarmes</h2>
+        <div class="alarm-motor-selector">
+            <label>🎯 Selecione o Motor:</label>
+            <div class="search-box">
+                <input type="text" id="searchMotorInput" placeholder="Buscar por nome ou ID...">
+                <span class="search-icon">🔍</span>
+            </div>
+            <div class="motor-list" id="motorListAlarm"></div>
+            <div id="selectedMotorDisplay" class="selected-motor-display" style="display: none;"></div>
+        </div>
+        <div id="alarmConfigArea" class="alarm-config-section" style="display: none;">
+            <label>🚨 Limite Velocidade RMS (mm/s):</label>
+            <input type="number" id="alarmRMS" step="0.1" value="3.0">
+            <label>🔵 Limite Eixo X (m/s²):</label>
+            <input type="number" id="alarmX" step="0.1" value="3.0">
+            <label>🟢 Limite Eixo Y (m/s²):</label>
+            <input type="number" id="alarmY" step="0.1" value="3.0">
+            <label>🟠 Limite Eixo Z (m/s²):</label>
+            <input type="number" id="alarmZ" step="0.1" value="3.0">
+            <label>🌡️ Limite Temperatura (°C):</label>
+            <input type="number" id="alarmTemp" step="1" value="50">
+        </div>
+        <div class="modal-buttons">
+            <button class="save-btn" id="saveAlarms">💾 Salvar</button>
+            <button class="cancel-btn" id="closeModalBtn">❌ Cancelar</button>
+        </div>
+        <div class="modal-footer-credit">✍️ Criado por Tales Benites Ponciani</div>
+    </div>
+</div>
+
+<div id="motoresModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
         <h2>📋 Gerenciar Motores</h2>
-        <div style="max-height: 300px; overflow-y: auto;">
-            <table style="width:100%; color:#fff;">
-                <thead><tr><th>ID</th><th>Nome</th><th>Marca</th><th>RPM</th></tr></thead>
+        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <button id="btnNovoMotor" style="background: #3498db; border: none; padding: 8px 16px; border-radius: 40px; color: white; cursor: pointer;">+ Novo Motor</button>
+            <span id="nextIdInfo" class="next-id-info"></span>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse; color: #eee; font-size: 0.85rem;">
+                <thead style="background: rgba(0,0,0,0.5);">
+                    <tr><th>ID</th><th>Nome</th><th>Marca</th><th>RPM</th><th>Frequência</th><th>CV</th><th>Ações</th></tr>
+                </thead>
                 <tbody id="tabelaMotores"></tbody>
             </table>
         </div>
-        <div class="modal-buttons">
-            <button class="save-btn" id="btnNovoMotor">+ Novo Motor</button>
+        <div class="modal-buttons" style="margin-top: 20px;">
             <button class="cancel-btn" id="closeMotoresModal">Fechar</button>
         </div>
+        <div class="modal-footer-credit">✍️ Criado por Tales Benites Ponciani</div>
+    </div>
+</div>
+
+<div id="motorFormModal" class="modal">
+    <div class="modal-content">
+        <h2 id="formTitle">➕ Adicionar Motor</h2>
+        <input type="hidden" id="motorId">
+        <label>Nome do Motor:</label>
+        <input type="text" id="motorNome" placeholder="Ex: Motor Esteira 1">
+        <label>Marca:</label>
+        <input type="text" id="motorMarca" placeholder="WEG, Siemens, etc.">
+        <label>Rotação (RPM):</label>
+        <input type="number" id="motorRpm" step="1" value="1800">
+        <label>Frequência (Hz):</label>
+        <input type="number" id="motorFreq" step="0.1" value="60">
+        <label>Potência (CV):</label>
+        <input type="number" id="motorCv" step="0.5" value="10">
+        <div class="modal-buttons">
+            <button class="save-btn" id="salvarMotorBtn">Salvar</button>
+            <button class="cancel-btn" id="cancelarMotorBtn">Cancelar</button>
+        </div>
+        <div class="modal-footer-credit">✍️ Criado por Tales Benites Ponciani</div>
+    </div>
+</div>
+
+<div id="editChartModal" class="modal">
+    <div class="modal-content">
+        <h2>✏️ Editar Gráfico</h2>
+        <input type="hidden" id="editChartId">
+        <label>📊 Título:</label>
+        <input type="text" id="editChartTitle">
+        <label>🎯 Motor:</label>
+        <select id="editChartMotor"></select>
+        <label>📈 Variável:</label>
+        <select id="editChartVariable">
+            <option value="temperatura">🌡️ Temperatura</option>
+            <option value="rms">📊 Velocidade RMS (mm/s)</option>
+            <option value="vibX">🔵 Horizontal X (m/s²)</option>
+            <option value="vibY">🟢 Axial Y (m/s²)</option>
+            <option value="vibZ">🟠 Vertical Z (m/s²)</option>
+        </select>
+        <label>🎨 Cor:</label>
+        <select id="editChartColor">
+            <option value="#e67e22">Laranja</option>
+            <option value="#3498db">Azul</option>
+            <option value="#2ecc71">Verde</option>
+            <option value="#e74c3c">Vermelho</option>
+            <option value="#9b59b6">Roxo</option>
+            <option value="#f1c40f">Amarelo</option>
+        </select>
+        <label>📏 Escala Mínima:</label>
+        <input type="number" id="editChartMin" step="0.1" placeholder="Automático">
+        <label>📏 Escala Máxima:</label>
+        <input type="number" id="editChartMax" step="0.1" placeholder="Automático">
+        <div class="modal-buttons">
+            <button class="save-btn" id="saveEditBtn">Salvar</button>
+            <button class="cancel-btn" id="cancelEditBtn">Cancelar</button>
+        </div>
+        <div class="modal-footer-credit">✍️ Criado por Tales Benites Ponciani</div>
     </div>
 </div>
 
@@ -789,9 +1167,6 @@
 <div class="footer-credit">✍️ Criado por Tales Benites Ponciani</div>
 
 <script>
-    // ==================== URL BASE DO RENDER ====================
-    const BASE_URL = 'https://tp-dynamics-iot-1.onrender.com';
-    
     // ==================== SEGURANÇA DE LOGIN ====================
     function verificarSessao() {
         const authenticated = sessionStorage.getItem('authenticated');
@@ -818,6 +1193,8 @@
             document.getElementById('loginError').style.display = 'none';
             document.getElementById('loginContainer').style.display = 'none';
             document.getElementById('dashboardContainer').style.display = 'block';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
             initDashboard();
         } else {
             document.getElementById('loginError').style.display = 'block';
@@ -830,17 +1207,29 @@
         document.getElementById('dashboardContainer').style.display = 'none';
     }
     
+    document.getElementById('username')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') performLogin(); });
+    document.getElementById('password')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') performLogin(); });
     document.getElementById('loginBtn')?.addEventListener('click', performLogin);
     
     // ==================== VARIÁVEIS GLOBAIS ====================
     let motores = [];
     let motorSelecionado = null;
+    let motorAlarmSelecionado = null;
+    let alarmConfigs = {};
     let pollingInterval = null;
-    let tempChart, rmsChart, horizontalChart, verticalChart, axialChart;
+    let fftChart = null;
     let customCharts = [];
     let chartInstances = {};
     
-    // ==================== FUNÇÕES ====================
+    const varNames = {
+        'temperatura': '🌡️ Temperatura (°C)',
+        'rms': '📊 Velocidade RMS (mm/s)',
+        'vibX': '🔵 Horizontal X (m/s²)',
+        'vibY': '🟢 Axial Y (m/s²)',
+        'vibZ': '🟠 Vertical Z (m/s²)'
+    };
+    
+    // ==================== FUNÇÕES DE NAVEGAÇÃO ====================
     function showDashboard() {
         document.getElementById('dashboardContainer').style.display = 'block';
         document.getElementById('customChartsContainer').style.display = 'none';
@@ -850,151 +1239,263 @@
     function showCustomCharts() {
         document.getElementById('dashboardContainer').style.display = 'none';
         document.getElementById('customChartsContainer').style.display = 'block';
-        setTimeout(() => carregarCustomChartsData(), 200);
+        setTimeout(() => { if (customCharts.length > 0) carregarCustomChartsData(); }, 200);
+    }
+    
+    // ==================== CARREGAR MOTORES ====================
+    function calcularProximoId() {
+        if (motores.length === 0) return 1;
+        const idsExistentes = motores.map(m => m.id).sort((a, b) => a - b);
+        for (let i = 1; i <= idsExistentes[idsExistentes.length - 1] + 1; i++) {
+            if (!idsExistentes.includes(i)) return i;
+        }
+        return idsExistentes[idsExistentes.length - 1] + 1;
     }
     
     async function carregarMotores() {
         try {
-            const response = await fetch(`${BASE_URL}/api/motores/`);
+            const response = await fetch('/api/motores/');
             if (response.ok) {
                 motores = await response.json();
-                const select = document.getElementById('motorSelect');
-                select.innerHTML = '<option value="">Selecione um motor...</option>';
-                motores.forEach(motor => {
-                    const option = document.createElement('option');
-                    option.value = motor.id;
-                    option.textContent = `[ID ${motor.id}] ${motor.nome}`;
-                    select.appendChild(option);
-                });
-                
-                const motorSelectCustom = document.getElementById('newChartMotor');
-                motorSelectCustom.innerHTML = '<option value="">Todos os motores</option>';
-                motores.forEach(motor => {
-                    const option = document.createElement('option');
-                    option.value = motor.id;
-                    option.textContent = `[ID ${motor.id}] ${motor.nome}`;
-                    motorSelectCustom.appendChild(option);
-                });
-                
+                atualizarSelectMotores();
+                atualizarSelectCustomMotores();
+                atualizarSelectMotorParaGraficos();
                 renderTabelaMotores();
+                renderMotorListForAlarm();
+                carregarAlarmConfigs();
+                const proximoId = calcularProximoId();
+                const nextIdInfo = document.getElementById('nextIdInfo');
+                if (nextIdInfo) nextIdInfo.innerHTML = `🔹 Próximo ID: ${proximoId}`;
             }
         } catch (err) { console.error('Erro ao carregar motores:', err); }
+    }
+    
+    function atualizarSelectMotores() {
+        const select = document.getElementById('motorSelect');
+        select.innerHTML = '<option value="">Selecione um motor...</option>';
+        motores.forEach(motor => {
+            const option = document.createElement('option');
+            option.value = motor.id;
+            option.textContent = `[ID ${motor.id}] ${motor.nome} - ${motor.marca}`;
+            select.appendChild(option);
+        });
+    }
+    
+    function atualizarSelectCustomMotores() {
+        const select = document.getElementById('newChartMotor');
+        select.innerHTML = '<option value="">Todos os motores</option>';
+        motores.forEach(motor => {
+            const option = document.createElement('option');
+            option.value = motor.id;
+            option.textContent = `[ID ${motor.id}] ${motor.nome} - ${motor.marca}`;
+            select.appendChild(option);
+        });
+    }
+    
+    function atualizarSelectMotorParaGraficos() {
+        const select = document.getElementById('editChartMotor');
+        if (select) {
+            select.innerHTML = '<option value="">Todos os motores</option>';
+            motores.forEach(motor => {
+                const option = document.createElement('option');
+                option.value = motor.id;
+                option.textContent = `[ID ${motor.id}] ${motor.nome} - ${motor.marca}`;
+                select.appendChild(option);
+            });
+        }
+    }
+    
+    function copiarIdMotor(id) {
+        navigator.clipboard.writeText(id.toString());
+        showToast(`✅ ID ${id} copiado!`, 3000);
     }
     
     function renderTabelaMotores() {
         const tbody = document.getElementById('tabelaMotores');
         if (!tbody) return;
         tbody.innerHTML = '';
-        motores.forEach(motor => {
+        if (motores.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhum motor cadastrado</td></tr>';
+            return;
+        }
+        motores.sort((a, b) => a.id - b.id).forEach(motor => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${motor.id}</td><td>${motor.nome}</td><td>${motor.marca}</td><td>${motor.rpm}</td>`;
+            tr.innerHTML = `
+                <td style="padding:8px;"><span class="motor-id-badge">#${motor.id}</span><table>
+                <td style="padding:8px;">${motor.nome}</td>
+                <td style="padding:8px;">${motor.marca}</td>
+                <td style="padding:8px;">${motor.rpm}</td>
+                <td style="padding:8px;">${motor.frequencia}</td>
+                <td style="padding:8px;">${motor.cv}</td>
+                <td style="padding:8px;">
+                    <button class="copy-btn" onclick="copiarIdMotor(${motor.id})">📋 Copiar ID</button>
+                    <button onclick="editarMotor(${motor.id})" style="background:#f39c12; border:none; border-radius:20px; padding:4px 12px; margin-right:5px; cursor:pointer;">✏️</button>
+                    <button onclick="excluirMotor(${motor.id})" style="background:#e74c3c; border:none; border-radius:20px; padding:4px 12px; cursor:pointer;">🗑️</button>
+                </td>
+            `;
             tbody.appendChild(tr);
         });
     }
     
-    function criarGrafico(ctx, label, cor) {
-        return new Chart(ctx, {
-            type: 'line',
-            data: { datasets: [{ label: label, data: [], borderColor: cor, backgroundColor: 'transparent', borderWidth: 2, fill: false, pointRadius: 3 }] },
-            options: { responsive: true, maintainAspectRatio: true, scales: { x: { type: 'time', time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } }, ticks: { color: '#ccc' } }, y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.1)' } } }, plugins: { legend: { labels: { color: '#fff' } } } }
+    function abrirFormMotor(motor = null) {
+        const proximoId = calcularProximoId();
+        document.getElementById('motorId').value = motor ? motor.id : '';
+        document.getElementById('motorNome').value = motor ? motor.nome : '';
+        document.getElementById('motorMarca').value = motor ? motor.marca : '';
+        document.getElementById('motorRpm').value = motor ? motor.rpm : 1800;
+        document.getElementById('motorFreq').value = motor ? motor.frequencia : 60;
+        document.getElementById('motorCv').value = motor ? motor.cv : 10;
+        document.getElementById('formTitle').innerHTML = motor ? '✏️ Editar Motor' : `➕ Adicionar Motor <span style="font-size:0.8rem; color:#2ecc71;">(ID: ${proximoId})</span>`;
+        document.getElementById('motorFormModal').style.display = 'flex';
+    }
+    
+    async function salvarMotor() {
+        const motorId = document.getElementById('motorId').value;
+        const dados = {
+            nome: document.getElementById('motorNome').value,
+            marca: document.getElementById('motorMarca').value,
+            rpm: parseInt(document.getElementById('motorRpm').value),
+            frequencia: parseFloat(document.getElementById('motorFreq').value),
+            cv: parseFloat(document.getElementById('motorCv').value)
+        };
+        try {
+            let response;
+            if (motorId) {
+                response = await fetch(`/api/motores/${motorId}/atualizar/`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados)
+                });
+            } else {
+                const proximoId = calcularProximoId();
+                response = await fetch('/api/motores/criar/', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...dados, id_desejado: proximoId })
+                });
+            }
+            if (response.ok) {
+                const resultado = await response.json();
+                showToast(motorId ? '✅ Motor atualizado!' : `✅ Motor criado com ID ${resultado.id}!`);
+                document.getElementById('motorFormModal').style.display = 'none';
+                await carregarMotores();
+            } else {
+                const erro = await response.json();
+                showToast(`❌ Erro: ${erro.erro || 'Erro desconhecido'}`);
+            }
+        } catch (err) { showToast('❌ Erro de conexão'); }
+    }
+    
+    async function editarMotor(id) {
+        try {
+            const response = await fetch(`/api/motores/${id}/`);
+            if (response.ok) {
+                const motor = await response.json();
+                abrirFormMotor(motor);
+            }
+        } catch (err) { console.error(err); }
+    }
+    
+    async function excluirMotor(id) {
+        if (!confirm(`⚠️ Excluir o motor ID ${id}?`)) return;
+        try {
+            const response = await fetch(`/api/motores/${id}/excluir/`, { method: 'DELETE' });
+            if (response.ok) {
+                showToast(`✅ Motor ID ${id} excluído!`);
+                if (motorSelecionado === id) {
+                    motorSelecionado = null;
+                    document.getElementById('motorSelect').value = '';
+                    document.getElementById('motorInfo').innerHTML = '';
+                }
+                delete alarmConfigs[id];
+                salvarAlarmConfigs();
+                await carregarMotores();
+            } else { showToast('❌ Erro ao excluir'); }
+        } catch (err) { showToast('❌ Erro de conexão'); }
+    }
+    
+    // ==================== CONFIGURAÇÕES DE ALARME ====================
+    function carregarAlarmConfigs() {
+        const saved = localStorage.getItem('tpDynamicsAlarmsByMotor');
+        if (saved) { try { alarmConfigs = JSON.parse(saved); } catch(e) {} }
+    }
+    
+    function salvarAlarmConfigs() {
+        localStorage.setItem('tpDynamicsAlarmsByMotor', JSON.stringify(alarmConfigs));
+    }
+    
+    function renderMotorListForAlarm() {
+        const container = document.getElementById('motorListAlarm');
+        if (!container) return;
+        container.innerHTML = '';
+        if (motores.length === 0) {
+            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #aaa;">Nenhum motor cadastrado</div>';
+            return;
+        }
+        motores.sort((a, b) => a.id - b.id).forEach(motor => {
+            const hasConfig = alarmConfigs[motor.id];
+            const div = document.createElement('div');
+            div.className = 'motor-item';
+            if (motorAlarmSelecionado === motor.id) div.classList.add('selected');
+            div.innerHTML = `<div><span class="motor-id-badge">ID ${motor.id}</span> - ${motor.nome}<br><small>${motor.marca} | ${motor.rpm} RPM</small></div><div>${hasConfig ? '⚙️' : '⭕'}</div>`;
+            div.onclick = () => selecionarMotorAlarme(motor.id);
+            container.appendChild(div);
         });
     }
     
-    function limparGraficos() {
-        if (tempChart) { tempChart.data.datasets[0].data = []; tempChart.update(); }
-        if (rmsChart) { rmsChart.data.datasets[0].data = []; rmsChart.update(); }
-        if (horizontalChart) { horizontalChart.data.datasets[0].data = []; horizontalChart.update(); }
-        if (verticalChart) { verticalChart.data.datasets[0].data = []; verticalChart.update(); }
-        if (axialChart) { axialChart.data.datasets[0].data = []; axialChart.update(); }
+    function selecionarMotorAlarme(motorId) {
+        motorAlarmSelecionado = motorId;
+        const motor = motores.find(m => m.id === motorId);
+        document.querySelectorAll('#motorListAlarm .motor-item').forEach(item => item.classList.remove('selected'));
+        const selectedDiv = Array.from(document.querySelectorAll('#motorListAlarm .motor-item')).find(item => item.innerHTML.includes(`ID ${motorId}`));
+        if (selectedDiv) selectedDiv.classList.add('selected');
+        const selectedDisplay = document.getElementById('selectedMotorDisplay');
+        selectedDisplay.style.display = 'block';
+        selectedDisplay.innerHTML = `✅ Motor Selecionado: <strong>${motor.nome}</strong> (ID: ${motor.id})<br><small>${motor.marca} | ${motor.rpm} RPM</small>`;
+        document.getElementById('alarmConfigArea').style.display = 'block';
+        const config = alarmConfigs[motorId] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
+        document.getElementById('alarmRMS').value = config.rms;
+        document.getElementById('alarmX').value = config.x;
+        document.getElementById('alarmY').value = config.y;
+        document.getElementById('alarmZ').value = config.z;
+        document.getElementById('alarmTemp').value = config.temp;
     }
     
-    function verificarEAlarm(cardId, valor, limite) {
-        const card = document.getElementById(cardId);
-        if (valor > limite) card.classList.add('alarme');
-        else card.classList.remove('alarme');
+    function filtrarMotoresAlarme() {
+        const searchTerm = document.getElementById('searchMotorInput').value.toLowerCase();
+        const items = document.querySelectorAll('#motorListAlarm .motor-item');
+        items.forEach(item => { item.style.display = item.textContent.toLowerCase().includes(searchTerm) ? 'flex' : 'none'; });
     }
     
-    function showToast(message, duration = 2000) {
-        const toast = document.getElementById('toastMsg');
-        toast.textContent = message;
-        toast.style.opacity = '1';
-        setTimeout(() => { toast.style.opacity = '0'; }, duration);
+    function saveAlarmForMotor() {
+        if (!motorAlarmSelecionado) { showToast('❌ Selecione um motor!', 2000); return; }
+        const motor = motores.find(m => m.id === motorAlarmSelecionado);
+        alarmConfigs[motorAlarmSelecionado] = {
+            rms: parseFloat(document.getElementById('alarmRMS').value),
+            x: parseFloat(document.getElementById('alarmX').value),
+            y: parseFloat(document.getElementById('alarmY').value),
+            z: parseFloat(document.getElementById('alarmZ').value),
+            temp: parseFloat(document.getElementById('alarmTemp').value)
+        };
+        salvarAlarmConfigs();
+        showToast(`✅ Alarmes salvos para ${motor.nome}`, 3000);
+        renderMotorListForAlarm();
+        closeConfigModal();
     }
     
-    // ==================== DASHBOARD PRINCIPAL ====================
-    async function carregarDadosAPI() {
-        if (!motorSelecionado) {
-            limparGraficos();
-            document.getElementById('noDataMessage').style.display = 'block';
-            document.getElementById('noDataMessage').innerHTML = '⚠️ Selecione um motor no menu superior.';
-            return;
-        }
-        
-        try {
-            const response = await fetch(`${BASE_URL}/api/dados/?motor_id=${motorSelecionado}`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
-            const dados = await response.json();
-            
-            if (dados && dados.length > 0) {
-                document.getElementById('noDataMessage').style.display = 'none';
-                const dadosOrdenados = [...dados].reverse();
-                const ultimo = dados[dados.length - 1];
-                
-                // CORREÇÃO: usando velocidade_mm_s (NÃO rms)
-                document.getElementById('tempAtual').innerText = ultimo.temperatura?.toFixed(1) || '--';
-                document.getElementById('rmsAtual').innerText = ultimo.velocidade_mm_s?.toFixed(2) || '--';
-                document.getElementById('horizAtual').innerText = ultimo.vibX?.toFixed(2) || '--';
-                document.getElementById('vertAtual').innerText = ultimo.vibZ?.toFixed(2) || '--';
-                document.getElementById('axialAtual').innerText = ultimo.vibY?.toFixed(2) || '--';
-                
-                document.getElementById('tempValue').innerHTML = `${ultimo.temperatura?.toFixed(1) || '--'} °C`;
-                document.getElementById('rmsValue').innerHTML = `${ultimo.velocidade_mm_s?.toFixed(2) || '--'} mm/s`;
-                document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX?.toFixed(2) || '--'} m/s²`;
-                document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ?.toFixed(2) || '--'} m/s²`;
-                document.getElementById('axialValue').innerHTML = `${ultimo.vibY?.toFixed(2) || '--'} m/s²`;
-                
-                // Histórico
-                const lista = document.getElementById('historicoLista');
-                if (lista.children.length === 1 && lista.children[0].innerText.includes("Aguardando")) lista.innerHTML = '';
-                const li = document.createElement('li');
-                li.innerHTML = `<span class="historico-tempo">${ultimo.data}</span><span>${ultimo.temperatura?.toFixed(1)}°C | Vel ${ultimo.velocidade_mm_s?.toFixed(2)} mm/s</span>`;
-                lista.insertBefore(li, lista.firstChild);
-                if (lista.children.length > 10) lista.removeChild(lista.lastChild);
-                
-                // Gráficos
-                const pontosTemp = [], pontosRms = [], pontosHoriz = [], pontosVert = [], pontosAxial = [];
-                dadosOrdenados.forEach(item => {
-                    let timestamp = Date.now();
-                    if (item.data) {
-                        const [h, m, s] = item.data.split(':');
-                        const date = new Date();
-                        date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
-                        timestamp = date.getTime();
-                    }
-                    pontosTemp.push({ x: timestamp, y: item.temperatura || 0 });
-                    pontosRms.push({ x: timestamp, y: item.velocidade_mm_s || 0 });
-                    pontosHoriz.push({ x: timestamp, y: item.vibX || 0 });
-                    pontosVert.push({ x: timestamp, y: item.vibZ || 0 });
-                    pontosAxial.push({ x: timestamp, y: item.vibY || 0 });
-                });
-                
-                if (tempChart) { tempChart.data.datasets[0].data = pontosTemp; tempChart.update(); }
-                if (rmsChart) { rmsChart.data.datasets[0].data = pontosRms; rmsChart.update(); }
-                if (horizontalChart) { horizontalChart.data.datasets[0].data = pontosHoriz; horizontalChart.update(); }
-                if (verticalChart) { verticalChart.data.datasets[0].data = pontosVert; verticalChart.update(); }
-                if (axialChart) { axialChart.data.datasets[0].data = pontosAxial; axialChart.update(); }
-                
-            } else {
-                document.getElementById('noDataMessage').style.display = 'block';
-                document.getElementById('noDataMessage').innerHTML = `⚠️ Nenhum dado para o motor ID ${motorSelecionado}`;
-                limparGraficos();
-            }
-        } catch(error) {
-            console.error('Erro:', error);
-            document.getElementById('noDataMessage').style.display = 'block';
-            document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
-        }
+    function closeConfigModal() {
+        document.getElementById('configModal').style.display = 'none';
+        motorAlarmSelecionado = null;
+        document.getElementById('alarmConfigArea').style.display = 'none';
+        document.getElementById('selectedMotorDisplay').style.display = 'none';
+        document.getElementById('searchMotorInput').value = '';
+    }
+    
+    function openAlarmModal() {
+        renderMotorListForAlarm();
+        document.getElementById('searchMotorInput').value = '';
+        document.getElementById('searchMotorInput').oninput = filtrarMotoresAlarme;
+        motorAlarmSelecionado = null;
+        document.getElementById('alarmConfigArea').style.display = 'none';
+        document.getElementById('selectedMotorDisplay').style.display = 'none';
+        document.getElementById('configModal').style.display = 'flex';
     }
     
     // ==================== GRÁFICOS PERSONALIZADOS ====================
@@ -1011,43 +1512,119 @@
         const title = document.getElementById('newChartTitle').value.trim();
         const motorId = document.getElementById('newChartMotor').value;
         const variable = document.getElementById('newChartVariable').value;
-        if (!title) { showToast('❌ Insira um título!'); return; }
-        customCharts.push({ id: Date.now(), title: title, motorId: motorId || null, variable: variable });
+        const color = document.getElementById('newChartColor').value;
+        const minY = document.getElementById('newChartMin').value;
+        const maxY = document.getElementById('newChartMax').value;
+        if (!title) { showToast('❌ Insira um título!', 2000); return; }
+        customCharts.push({ id: Date.now(), title: title, motorId: motorId || null, variable: variable, color: color, minY: minY ? parseFloat(minY) : null, maxY: maxY ? parseFloat(maxY) : null });
         salvarCustomCharts();
         renderCustomCharts();
         document.getElementById('newChartTitle').value = '';
-        setTimeout(() => carregarCustomChartsData(), 100);
-        showToast(`✅ Gráfico "${title}" adicionado!`);
+        document.getElementById('newChartMin').value = '';
+        document.getElementById('newChartMax').value = '';
+        setTimeout(() => { carregarCustomChartsData(); }, 100);
+        showToast(`✅ Gráfico "${title}" adicionado!`, 2000);
     }
     
     function removerChart(chartId) {
-        if (confirm('Remover este gráfico?')) {
+        const chart = customCharts.find(c => c.id === chartId);
+        if (confirm(`Remover "${chart.title}"?`)) {
             customCharts = customCharts.filter(c => c.id !== chartId);
             salvarCustomCharts();
             renderCustomCharts();
-            showToast('✅ Gráfico removido!');
+            showToast(`✅ Gráfico removido!`, 2000);
+        }
+    }
+    
+    function abrirEditChart(chartId) {
+        const chart = customCharts.find(c => c.id === chartId);
+        if (chart) {
+            document.getElementById('editChartId').value = chart.id;
+            document.getElementById('editChartTitle').value = chart.title;
+            document.getElementById('editChartMotor').value = chart.motorId || '';
+            document.getElementById('editChartVariable').value = chart.variable;
+            document.getElementById('editChartColor').value = chart.color;
+            document.getElementById('editChartMin').value = chart.minY !== null ? chart.minY : '';
+            document.getElementById('editChartMax').value = chart.maxY !== null ? chart.maxY : '';
+            document.getElementById('editChartModal').style.display = 'flex';
+        }
+    }
+    
+    function salvarEditChart() {
+        const chartId = parseInt(document.getElementById('editChartId').value);
+        const index = customCharts.findIndex(c => c.id === chartId);
+        if (index !== -1) {
+            customCharts[index] = {
+                id: chartId,
+                title: document.getElementById('editChartTitle').value.trim(),
+                motorId: document.getElementById('editChartMotor').value || null,
+                variable: document.getElementById('editChartVariable').value,
+                color: document.getElementById('editChartColor').value,
+                minY: document.getElementById('editChartMin').value ? parseFloat(document.getElementById('editChartMin').value) : null,
+                maxY: document.getElementById('editChartMax').value ? parseFloat(document.getElementById('editChartMax').value) : null
+            };
+            salvarCustomCharts();
+            renderCustomCharts();
+            document.getElementById('editChartModal').style.display = 'none';
+            setTimeout(() => { carregarCustomChartsData(); }, 100);
+            showToast(`✅ Gráfico atualizado!`, 2000);
+        }
+    }
+    
+    function atualizarMotorChart(chartId, motorId) {
+        const index = customCharts.findIndex(c => c.id === chartId);
+        if (index !== -1) {
+            customCharts[index].motorId = motorId || null;
+            salvarCustomCharts();
+            carregarCustomChartsData();
+            showToast(`✅ Motor do gráfico atualizado!`, 2000);
+        }
+    }
+    
+    function atualizarEscalaChart(chartId) {
+        const index = customCharts.findIndex(c => c.id === chartId);
+        if (index !== -1) {
+            const minInput = document.getElementById(`min-${chartId}`);
+            const maxInput = document.getElementById(`max-${chartId}`);
+            customCharts[index].minY = minInput.value ? parseFloat(minInput.value) : null;
+            customCharts[index].maxY = maxInput.value ? parseFloat(maxInput.value) : null;
+            salvarCustomCharts();
+            if (chartInstances[chartId]) {
+                const options = chartInstances[chartId].options;
+                if (options.scales.y) {
+                    options.scales.y.min = customCharts[index].minY;
+                    options.scales.y.max = customCharts[index].maxY;
+                    chartInstances[chartId].update();
+                }
+            } else { carregarCustomChartsData(); }
+            showToast(`✅ Escala do gráfico atualizada!`, 2000);
         }
     }
     
     function renderCustomCharts() {
         const grid = document.getElementById('chartsGrid');
         if (customCharts.length === 0) {
-            grid.innerHTML = '<div class="empty-charts">📊 Nenhum gráfico adicionado. Clique em "+ Adicionar Gráfico" para começar!</div>';
+            grid.innerHTML = '<div class="empty-charts">📊 Nenhum gráfico adicionado ainda.<br>Clique em "+ Adicionar Gráfico" para começar!</div>';
             return;
         }
         grid.innerHTML = '';
         customCharts.forEach(chart => {
+            const motorOptions = motores.map(m => `<option value="${m.id}" ${chart.motorId == m.id ? 'selected' : ''}>[ID ${m.id}] ${m.nome}</option>`).join('');
             const card = document.createElement('div');
             card.className = 'custom-chart-card';
+            card.id = `chart-card-${chart.id}`;
             card.innerHTML = `
                 <div class="chart-header">
                     <span class="chart-title">${chart.title}</span>
-                    <div class="chart-controls">
-                        <button class="btn-remove-chart" onclick="removerChart(${chart.id})">🗑️</button>
+                    <div class="chart-config">
+                        <div><label>🎯 Motor:</label><select id="motor-select-${chart.id}" onchange="atualizarMotorChart(${chart.id}, this.value)"><option value="">Todos os motores</option>${motorOptions}</select></div>
+                        <div><label>📏 Mín:</label><input type="number" id="min-${chart.id}" step="0.1" placeholder="Auto" value="${chart.minY !== null ? chart.minY : ''}" style="width:60px;" onchange="atualizarEscalaChart(${chart.id})"></div>
+                        <div><label>📏 Máx:</label><input type="number" id="max-${chart.id}" step="0.1" placeholder="Auto" value="${chart.maxY !== null ? chart.maxY : ''}" style="width:60px;" onchange="atualizarEscalaChart(${chart.id})"></div>
+                        <div class="chart-controls"><button class="btn-edit-chart" onclick="abrirEditChart(${chart.id})" title="Editar">✏️</button><button class="btn-remove-chart" onclick="removerChart(${chart.id})" title="Remover">🗑️</button></div>
                     </div>
                 </div>
                 <canvas id="chart-${chart.id}" style="width:100%; max-height:250px;"></canvas>
-                <div id="loading-${chart.id}" style="text-align:center; padding:20px; color:#aaa;">⏳ Carregando...</div>
+                <div id="loading-${chart.id}" style="text-align:center; padding:20px; color:#aaa;">⏳ Carregando dados...</div>
             `;
             grid.appendChild(card);
         });
@@ -1055,31 +1632,37 @@
     
     async function carregarCustomChartsData() {
         for (const chart of customCharts) {
-            let url = `${BASE_URL}/api/dados/`;
+            let url = '/api/dados/';
             if (chart.motorId) url += `?motor_id=${chart.motorId}`;
             try {
                 const response = await fetch(url);
                 if (response.ok) {
                     const dados = await response.json();
-                    atualizarCustomChart(chart.id, chart.variable, dados);
+                    atualizarCustomChart(chart.id, chart.variable, chart.color, chart.title, dados, chart.minY, chart.maxY);
+                } else {
+                    const loadingDiv = document.getElementById(`loading-${chart.id}`);
+                    if (loadingDiv) loadingDiv.innerHTML = '❌ Erro ao carregar dados';
                 }
-            } catch(err) { console.error('Erro ao carregar gráfico:', err); }
+            } catch (err) { 
+                const loadingDiv = document.getElementById(`loading-${chart.id}`);
+                if (loadingDiv) loadingDiv.innerHTML = '❌ Erro de conexão';
+            }
         }
     }
     
-    function atualizarCustomChart(chartId, variable, dados) {
+    function atualizarCustomChart(chartId, variable, color, title, dados, minY, maxY) {
         const canvas = document.getElementById(`chart-${chartId}`);
         const loadingDiv = document.getElementById(`loading-${chartId}`);
         if (!canvas) return;
         if (loadingDiv) loadingDiv.style.display = 'none';
-        
+        const ctx = canvas.getContext('2d');
         if (!dados || dados.length === 0) {
-            if (loadingDiv) { loadingDiv.style.display = 'block'; loadingDiv.innerHTML = '📭 Sem dados'; }
+            if (loadingDiv) { loadingDiv.style.display = 'block'; loadingDiv.innerHTML = '📭 Nenhum dado disponível ainda.'; }
             return;
         }
-        
+        const dadosOrdenados = [...dados].reverse();
         const pontos = [];
-        [...dados].reverse().forEach(item => {
+        dadosOrdenados.forEach(item => {
             let timestamp = Date.now();
             if (item.data) {
                 const [h, m, s] = item.data.split(':');
@@ -1090,7 +1673,7 @@
             let valor = 0;
             switch(variable) {
                 case 'temperatura': valor = item.temperatura; break;
-                case 'velocidade_mm_s': valor = item.velocidade_mm_s; break;
+                case 'rms': valor = item.rms; break;
                 case 'vibX': valor = item.vibX; break;
                 case 'vibY': valor = item.vibY; break;
                 case 'vibZ': valor = item.vibZ; break;
@@ -1098,75 +1681,362 @@
             }
             pontos.push({ x: timestamp, y: valor });
         });
-        
-        if (chartInstances[chartId]) chartInstances[chartId].destroy();
-        
-        const varLabels = {
-            'temperatura': '🌡️ Temperatura (°C)',
-            'velocidade_mm_s': '📊 Velocidade RMS (mm/s)',
-            'vibX': '🔵 Horizontal X (m/s²)',
-            'vibY': '🟢 Axial Y (m/s²)',
-            'vibZ': '🟠 Vertical Z (m/s²)'
-        };
-        
-        chartInstances[chartId] = new Chart(canvas.getContext('2d'), {
+        if (chartInstances[chartId]) { chartInstances[chartId].destroy(); delete chartInstances[chartId]; }
+        const yConfig = {};
+        if (minY !== null && minY !== undefined && !isNaN(minY)) yConfig.min = minY;
+        if (maxY !== null && maxY !== undefined && !isNaN(maxY)) yConfig.max = maxY;
+        try {
+            chartInstances[chartId] = new Chart(ctx, {
+                type: 'line',
+                data: { datasets: [{ label: varNames[variable] || variable, data: pontos, borderColor: color, backgroundColor: color + '20', borderWidth: 2, fill: true, pointRadius: 3, tension: 0.1 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { mode: 'index', intersect: false }, legend: { labels: { color: '#fff' } } }, scales: { x: { type: 'time', time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } }, ticks: { color: '#ccc' }, title: { display: true, text: 'Tempo', color: '#ccc' } }, y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.1)' }, title: { display: true, text: varNames[variable] || variable, color: '#ccc' }, ...yConfig } } }
+            });
+        } catch (err) { console.error('Erro:', err); }
+    }
+    
+    // ==================== DASHBOARD PRINCIPAL ====================
+    let tempChart, rmsChart, horizontalChart, verticalChart, axialChart;
+    let dadosRecebidos = false;
+    
+    function criarGrafico(ctx, label, cor) {
+        return new Chart(ctx, {
             type: 'line',
-            data: { datasets: [{ label: varLabels[variable] || variable, data: pontos, borderColor: '#f39c12', backgroundColor: '#f39c1220', borderWidth: 2, fill: true, pointRadius: 3 }] },
-            options: { responsive: true, maintainAspectRatio: true, scales: { x: { type: 'time', time: { unit: 'second' }, ticks: { color: '#ccc' } }, y: { ticks: { color: '#ccc' } } }, plugins: { legend: { labels: { color: '#fff' } } } }
+            data: { datasets: [{ label: label, data: [], borderColor: cor, backgroundColor: 'transparent', borderWidth: 2, fill: false, pointRadius: 3, tension: 0.1 }] },
+            options: { responsive: true, maintainAspectRatio: true, scales: { x: { type: 'time', time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } }, ticks: { color: '#ccc' } }, y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.1)' } } }, plugins: { legend: { labels: { color: '#fff' } } } }
         });
     }
     
-    // ==================== INICIALIZAÇÃO ====================
+    function criarGraficoFFT() {
+        const ctx = document.getElementById('fftChart').getContext('2d');
+        if (fftChart) fftChart.destroy();
+        fftChart = new Chart(ctx, {
+            type: 'line',
+            data: { 
+                datasets: [{ 
+                    label: 'Espectro FFT', 
+                    data: [], 
+                    borderColor: '#e74c3c', 
+                    backgroundColor: 'transparent', 
+                    borderWidth: 2, 
+                    pointRadius: 2,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#e74c3c',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1,
+                    fill: false, 
+                    tension: 0 
+                }] 
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: { 
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: '#f39c12',
+                        bodyColor: '#fff',
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                return `📊 Análise Espectral`;
+                            },
+                            label: function(context) {
+                                const freq = context.parsed.x;
+                                const amp = context.parsed.y;
+                                return [
+                                    `🎵 Frequência: ${freq.toFixed(2)} Hz`,
+                                    `📈 Amplitude: ${amp.toFixed(4)} m/s²`,
+                                    `🔍 Status: ${amp > 0.01 ? '⚠️ Vibração detectada' : '✅ Normal'}`
+                                ];
+                            }
+                        }
+                    },
+                    legend: { 
+                        labels: { color: '#fff' },
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: { 
+                        title: { display: true, text: 'Frequência (Hz)', color: '#aaa' }, 
+                        ticks: { color: '#aaa' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    y: { 
+                        title: { display: true, text: 'Amplitude (m/s²)', color: '#aaa' }, 
+                        ticks: { color: '#aaa' }, 
+                        grid: { color: 'rgba(255,255,255,0.1)' },
+                        beginAtZero: true
+                    }
+                },
+                onHover: (event, chartElement) => {
+                    const canvas = document.getElementById('fftChart');
+                    canvas.style.cursor = chartElement.length ? 'pointer' : 'default';
+                }
+            }
+        });
+    }
+    
+    function atualizarMetricasSKF(analise) {
+        if (!analise) return;
+        if (analise.crest_factor) document.getElementById('skfCrest').innerHTML = analise.crest_factor.toFixed(2);
+        if (analise.kurtosis) {
+            const kurtosisEl = document.getElementById('skfKurtosis');
+            kurtosisEl.innerHTML = analise.kurtosis.toFixed(2);
+            if (analise.kurtosis > 3) kurtosisEl.style.color = '#e74c3c';
+            else if (analise.kurtosis > 2) kurtosisEl.style.color = '#f39c12';
+            else kurtosisEl.style.color = '#2ecc71';
+        }
+        if (analise.rms_mm_s) document.getElementById('skfVelocity').innerHTML = analise.rms_mm_s.toFixed(2);
+        if (analise.frequencia_dominante_x) document.getElementById('skfFreq').innerHTML = analise.frequencia_dominante_x.toFixed(1);
+        let severidadeTexto = analise.severidade || 'Normal';
+        const severidadeEl = document.getElementById('skfSeveridade');
+        severidadeEl.innerHTML = severidadeTexto;
+        if (severidadeTexto === 'Perigosa') severidadeEl.style.color = '#e74c3c';
+        else if (severidadeTexto === 'Alerta') severidadeEl.style.color = '#f39c12';
+        else if (severidadeTexto === 'Atencao') severidadeEl.style.color = '#3498db';
+        else severidadeEl.style.color = '#2ecc71';
+        let diagnosticoHtml = '';
+        if (analise.recomendacao) diagnosticoHtml += `<strong>📋 Recomendação:</strong> ${analise.recomendacao}<br>`;
+        if (analise.condicao_rolamento) diagnosticoHtml += `<strong>🔄 Rolamento:</strong> ${analise.condicao_rolamento}<br>`;
+        if (analise.condicao_mancal) diagnosticoHtml += `<strong>⚙️ Mancal:</strong> ${analise.condicao_mancal}<br>`;
+        if (analise.nivel_alerta) diagnosticoHtml += `<strong>⚠️ Alerta:</strong> ${analise.nivel_alerta}<br>`;
+        if (analise.energia_alta_freq && analise.energia_alta_freq > 50) diagnosticoHtml += `<strong>⚠️ Alta frequência elevada</strong> - Possível falha em rolamento<br>`;
+        if (diagnosticoHtml === '') diagnosticoHtml = '✅ Equipamento em condição normal. Monitoramento contínuo.';
+        document.getElementById('skfDiagnostico').innerHTML = diagnosticoHtml;
+    }
+    
+    function atualizarGraficoFFT(fftData) {
+        if (!fftData || !fftData.fft_data || fftData.fft_data.length === 0) {
+            document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT...';
+            if (fftChart) { fftChart.data.datasets[0].data = []; fftChart.update(); }
+            return;
+        }
+        
+        const maxAmp = Math.max(...fftData.fft_data.map(p => p.amp));
+        const maxFreq = fftData.fft_data.find(p => p.amp === maxAmp)?.freq || 0;
+        
+        document.getElementById('fftStatus').innerHTML = `✅ FFT gerada | 🎵 Freq. Dominante: ${maxFreq.toFixed(1)} Hz | 📈 Amp. Máx: ${maxAmp.toFixed(4)} m/s² | 💡 Passe o mouse sobre a linha para ver valores em tempo real`;
+        
+        const pontos = fftData.fft_data.map(p => ({ x: p.freq, y: p.amp }));
+        
+        if (fftChart) {
+            fftChart.data.datasets[0].data = pontos;
+            fftChart.update();
+        } else {
+            criarGraficoFFT();
+            if (fftChart) fftChart.data.datasets[0].data = pontos;
+            if (fftChart) fftChart.update();
+        }
+    }
+    
+    function verificarEAlarm(cardId, valor, limite) {
+        const card = document.getElementById(cardId);
+        if (valor > limite) card.classList.add('alarme');
+        else card.classList.remove('alarme');
+    }
+    
+    function showToast(message, duration = 2000) {
+        const toast = document.getElementById('toastMsg');
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        setTimeout(() => { toast.style.opacity = '0'; }, duration);
+    }
+    
+    function limparGraficos() {
+        tempChart.data.datasets[0].data = [];
+        tempChart.update();
+        rmsChart.data.datasets[0].data = [];
+        rmsChart.update();
+        horizontalChart.data.datasets[0].data = [];
+        horizontalChart.update();
+        verticalChart.data.datasets[0].data = [];
+        verticalChart.update();
+        axialChart.data.datasets[0].data = [];
+        axialChart.update();
+        document.getElementById('tempValue').innerHTML = '-- °C';
+        document.getElementById('rmsValue').innerHTML = '-- mm/s';
+        document.getElementById('horizontalValue').innerHTML = '-- m/s²';
+        document.getElementById('verticalValue').innerHTML = '-- m/s²';
+        document.getElementById('axialValue').innerHTML = '-- m/s²';
+    }
+    
+    async function carregarDadosAPI() {
+        if (!motorSelecionado || motorSelecionado === '') {
+            limparGraficos();
+            const lista = document.getElementById('historicoLista');
+            lista.innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
+            document.getElementById('tempAtual').innerText = '--';
+            document.getElementById('rmsAtual').innerText = '--';
+            document.getElementById('horizAtual').innerText = '--';
+            document.getElementById('vertAtual').innerText = '--';
+            document.getElementById('axialAtual').innerText = '--';
+            document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('noDataMessage').innerHTML = '⚠️ Selecione um motor para visualizar os dados.';
+            return;
+        }
+        
+        let url = `/api/dados/?motor_id=${motorSelecionado}`;
+        
+        fetch(url).then(response => response.json()).then(dados => {
+            const noDataDiv = document.getElementById('noDataMessage');
+            if (dados && dados.length > 0) {
+                dadosRecebidos = true;
+                noDataDiv.style.display = 'none';
+                const dadosOrdenados = [...dados].reverse();
+                const ultimo = dados[dados.length - 1];
+                document.getElementById('tempAtual').innerText = ultimo.temperatura.toFixed(1);
+                document.getElementById('rmsAtual').innerText = ultimo.rms.toFixed(2);
+                document.getElementById('horizAtual').innerText = ultimo.vibX.toFixed(2);
+                document.getElementById('vertAtual').innerText = ultimo.vibZ.toFixed(2);
+                document.getElementById('axialAtual').innerText = ultimo.vibY.toFixed(2);
+                document.getElementById('tempValue').innerHTML = `${ultimo.temperatura.toFixed(1)} °C`;
+                document.getElementById('rmsValue').innerHTML = `${ultimo.rms.toFixed(2)} mm/s`;
+                document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX.toFixed(2)} m/s²`;
+                document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ.toFixed(2)} m/s²`;
+                document.getElementById('axialValue').innerHTML = `${ultimo.vibY.toFixed(2)} m/s²`;
+                const alarmConfig = alarmConfigs[motorSelecionado] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
+                verificarEAlarm('cardRMS', ultimo.rms, alarmConfig.rms);
+                verificarEAlarm('cardX', ultimo.vibX, alarmConfig.x);
+                verificarEAlarm('cardY', ultimo.vibY, alarmConfig.y);
+                verificarEAlarm('cardZ', ultimo.vibZ, alarmConfig.z);
+                verificarEAlarm('cardTemp', ultimo.temperatura, alarmConfig.temp);
+                const lista = document.getElementById('historicoLista');
+                if (lista.children.length === 1 && lista.children[0].innerText.includes("Aguardando")) lista.innerHTML = '';
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="historico-tempo">${ultimo.data}</span><span>${ultimo.temperatura.toFixed(1)}°C | Vel ${ultimo.rms.toFixed(2)} mm/s</span>`;
+                lista.insertBefore(li, lista.firstChild);
+                if (lista.children.length > 10) lista.removeChild(lista.lastChild);
+                const pontosTemp = [], pontosRms = [], pontosHoriz = [], pontosVert = [], pontosAxial = [];
+                dadosOrdenados.forEach(item => {
+                    let timestamp = Date.now();
+                    if (item.data) {
+                        const [h, m, s] = item.data.split(':');
+                        const date = new Date();
+                        date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
+                        timestamp = date.getTime();
+                    }
+                    pontosTemp.push({ x: timestamp, y: item.temperatura });
+                    pontosRms.push({ x: timestamp, y: item.rms });
+                    pontosHoriz.push({ x: timestamp, y: item.vibX });
+                    pontosVert.push({ x: timestamp, y: item.vibZ });
+                    pontosAxial.push({ x: timestamp, y: item.vibY });
+                });
+                tempChart.data.datasets[0].data = pontosTemp; tempChart.update();
+                rmsChart.data.datasets[0].data = pontosRms; rmsChart.update();
+                horizontalChart.data.datasets[0].data = pontosHoriz; horizontalChart.update();
+                verticalChart.data.datasets[0].data = pontosVert; verticalChart.update();
+                axialChart.data.datasets[0].data = pontosAxial; axialChart.update();
+            } else {
+                noDataDiv.style.display = 'block';
+                noDataDiv.innerHTML = `⚠️ Nenhum dado encontrado para o motor ID ${motorSelecionado}. Aguardando leituras...`;
+                limparGraficos();
+                document.getElementById('tempAtual').innerText = '--';
+                document.getElementById('rmsAtual').innerText = '--';
+                document.getElementById('horizAtual').innerText = '--';
+                document.getElementById('vertAtual').innerText = '--';
+                document.getElementById('axialAtual').innerText = '--';
+                const lista = document.getElementById('historicoLista');
+                lista.innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
+            }
+        }).catch(error => {
+            console.error('Erro ao buscar dados:', error);
+            limparGraficos();
+            document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
+        });
+        
+        try {
+            const response = await fetch(`/api/analise/${motorSelecionado}/`);
+            if (response.ok) {
+                const analise = await response.json();
+                if (analise.analise_basica) atualizarMetricasSKF(analise.analise_basica);
+                if (analise.diagnostico) {
+                    const diag = analise.diagnostico;
+                    let diagnosticoHtml = `<strong>📋 Recomendação:</strong> ${diag.recomendacao || 'Monitorar'}<br>`;
+                    diagnosticoHtml += `<strong>🔄 Rolamento:</strong> ${diag.condicao_rolamento || 'Normal'}<br>`;
+                    diagnosticoHtml += `<strong>⚙️ Mancal:</strong> ${diag.condicao_mancal || 'Normal'}<br>`;
+                    diagnosticoHtml += `<strong>⚠️ Alerta:</strong> ${diag.nivel_alerta || 'NORMAL'}`;
+                    document.getElementById('skfDiagnostico').innerHTML = diagnosticoHtml;
+                }
+            }
+        } catch (err) { console.log('Análise avançada não disponível ainda'); }
+        
+        try {
+            const response = await fetch(`/api/fft/${motorSelecionado}/`);
+            if (response.ok) { const fftData = await response.json(); atualizarGraficoFFT(fftData); }
+        } catch (err) { console.log('FFT não disponível ainda'); }
+    }
+    
     function initDashboard() {
         carregarMotores();
         carregarCustomCharts();
-        
+        criarGraficoFFT();
         const ctxTemp = document.getElementById('tempChart').getContext('2d');
         const ctxRms = document.getElementById('rmsChart').getContext('2d');
         const ctxHoriz = document.getElementById('horizontalChart').getContext('2d');
         const ctxVert = document.getElementById('verticalChart').getContext('2d');
         const ctxAxial = document.getElementById('axialChart').getContext('2d');
-        
         tempChart = criarGrafico(ctxTemp, 'Temperatura (°C)', '#e67e22');
         rmsChart = criarGrafico(ctxRms, 'Velocidade RMS (mm/s)', '#9b59b6');
         horizontalChart = criarGrafico(ctxHoriz, 'Horizontal X (m/s²)', '#3498db');
         verticalChart = criarGrafico(ctxVert, 'Vertical Z (m/s²)', '#f39c12');
         axialChart = criarGrafico(ctxAxial, 'Axial Y (m/s²)', '#2ecc71');
-        
         carregarDadosAPI();
-        
         if (pollingInterval) clearInterval(pollingInterval);
         pollingInterval = setInterval(() => {
             carregarDadosAPI();
             if (document.getElementById('customChartsContainer').style.display === 'block') carregarCustomChartsData();
         }, 5000);
-        
+        setupMenuAndActions();
         document.getElementById('motorSelect').addEventListener('change', (e) => {
             motorSelecionado = e.target.value ? parseInt(e.target.value) : null;
             const motor = motores.find(m => m.id === motorSelecionado);
-            document.getElementById('motorInfo').innerHTML = motor ? `ID: ${motor.id} | ${motor.rpm} RPM` : '';
+            document.getElementById('motorInfo').innerHTML = motor ? `ID: ${motor.id} | ${motor.rpm} RPM | ${motor.cv} CV` : '';
             carregarDadosAPI();
         });
-        
         document.getElementById('addChartBtn').addEventListener('click', adicionarChart);
         document.getElementById('backToDashboardBtn').addEventListener('click', showDashboard);
+        document.getElementById('saveEditBtn').addEventListener('click', salvarEditChart);
+        document.getElementById('cancelEditBtn').addEventListener('click', () => document.getElementById('editChartModal').style.display = 'none');
+        document.getElementById('saveAlarms').addEventListener('click', saveAlarmForMotor);
+        document.getElementById('closeModalBtn').addEventListener('click', closeConfigModal);
         document.getElementById('closeMotoresModal').addEventListener('click', () => document.getElementById('motoresModal').style.display = 'none');
-        document.getElementById('btnNovoMotor').addEventListener('click', () => showToast('📋 Use o menu "Motores" para gerenciar'));
+        document.getElementById('btnNovoMotor').addEventListener('click', () => abrirFormMotor(null));
+        document.getElementById('salvarMotorBtn').addEventListener('click', salvarMotor);
+        document.getElementById('cancelarMotorBtn').addEventListener('click', () => document.getElementById('motorFormModal').style.display = 'none');
+    }
+    
+    function setupMenuAndActions() {
+        const menus = [
+            { btn: 'menuBtn', dropdown: 'menuDropdown' },
+            { btn: 'menuBtn2', dropdown: 'menuDropdown2' }
+        ];
+        menus.forEach(({ btn, dropdown }) => {
+            const btnEl = document.getElementById(btn);
+            const dropdownEl = document.getElementById(dropdown);
+            btnEl?.addEventListener('click', (e) => { e.stopPropagation(); dropdownEl.classList.toggle('show'); });
+            window.addEventListener('click', (e) => {
+                if (!btnEl?.contains(e.target) && !dropdownEl?.contains(e.target)) dropdownEl?.classList.remove('show');
+            });
+        });
         
-        // Menu actions
-        document.getElementById('menuDashboard')?.addEventListener('click', (e) => { e.preventDefault(); showDashboard(); });
-        document.getElementById('menuDashboard2')?.addEventListener('click', (e) => { e.preventDefault(); showDashboard(); });
-        document.getElementById('menuCustomCharts')?.addEventListener('click', (e) => { e.preventDefault(); showCustomCharts(); });
-        document.getElementById('menuCustomCharts2')?.addEventListener('click', (e) => { e.preventDefault(); showCustomCharts(); });
-        document.getElementById('menuMotores')?.addEventListener('click', (e) => { e.preventDefault(); carregarMotores(); document.getElementById('motoresModal').style.display = 'flex'; });
-        document.getElementById('menuMotores2')?.addEventListener('click', (e) => { e.preventDefault(); carregarMotores(); document.getElementById('motoresModal').style.display = 'flex'; });
-        document.getElementById('menuLogout')?.addEventListener('click', (e) => { e.preventDefault(); fazerLogout(); });
-        document.getElementById('menuLogout2')?.addEventListener('click', (e) => { e.preventDefault(); fazerLogout(); });
-        
-        // Dropdown menus
-        document.getElementById('menuBtn')?.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('menuDropdown').classList.toggle('show'); });
-        document.getElementById('menuBtn2')?.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('menuDropdown2').classList.toggle('show'); });
-        window.addEventListener('click', () => { document.getElementById('menuDropdown')?.classList.remove('show'); document.getElementById('menuDropdown2')?.classList.remove('show'); });
+        const actions = [
+            { id: 'menuDashboard', fn: showDashboard }, { id: 'menuDashboard2', fn: showDashboard },
+            { id: 'menuCustomCharts', fn: showCustomCharts }, { id: 'menuCustomCharts2', fn: showCustomCharts },
+            { id: 'menuMotores', fn: () => document.getElementById('motoresModal').style.display = 'flex' }, { id: 'menuMotores2', fn: () => document.getElementById('motoresModal').style.display = 'flex' },
+            { id: 'menuConfig', fn: openAlarmModal }, { id: 'menuConfig2', fn: openAlarmModal },
+            { id: 'menuExport', fn: () => showToast('📁 Dados exportados!') }, { id: 'menuExport2', fn: () => showToast('📁 Dados exportados!') },
+            { id: 'menuAjuda', fn: () => showToast('❓ Selecione motor e configure escala para cada gráfico!') }, { id: 'menuAjuda2', fn: () => showToast('❓ Selecione motor e configure escala para cada gráfico!') },
+            { id: 'menuSobre', fn: () => showToast('ℹ️ TP Dynamics IoT - Criado por Tales Benites Ponciani') }, { id: 'menuSobre2', fn: () => showToast('ℹ️ TP Dynamics IoT - Criado por Tales Benites Ponciani') },
+            { id: 'menuLogout', fn: fazerLogout }, { id: 'menuLogout2', fn: fazerLogout }
+        ];
+        actions.forEach(({ id, fn }) => { document.getElementById(id)?.addEventListener('click', (e) => { e.preventDefault(); fn(); document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show')); }); });
     }
 </script>
 </body>
