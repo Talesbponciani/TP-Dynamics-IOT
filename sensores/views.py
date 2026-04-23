@@ -1,3 +1,44 @@
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+import json
+import math
+import os
+from collections import deque
+from datetime import datetime
+from pathlib import Path
+
+# Tentar importar numpy e scipy
+try:
+    import numpy as np
+    from scipy.fft import fft, fftfreq
+    from scipy import stats
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    np = None
+    stats = None
+
+from .models import Leitura, Motor
+
+# ========== BUFFERS ==========
+buffers = {}
+BUFFER_SIZE = 50
+
+# Arquivo para offsets
+BASE_DIR = Path(__file__).resolve().parent.parent
+OFFSETS_FILE = BASE_DIR / 'offsets.json'
+
+
+# ========== VIEWS ==========
+def dashboard(request):
+    """View principal que renderiza o dashboard HTML"""
+    return render(request, 'dashboard.html')
+
+
+def calcular_estatisticas_sem_scipy(amostras):
+    """Fallback para quando scipy não está disponível"""
+    # ... resto da função
 # =========================
 # ANÁLISE COMPLETA ESTILO SKF (CORRIGIDA)
 # =========================
