@@ -1167,6 +1167,9 @@
 <div class="footer-credit">✍️ Criado por Tales Benites Ponciani</div>
 
 <script>
+    // ==================== URL BASE DO RENDER ====================
+    const BASE_URL = 'https://tp-dynamics-iot-1.onrender.com';
+    
     // ==================== SEGURANÇA DE LOGIN ====================
     function verificarSessao() {
         const authenticated = sessionStorage.getItem('authenticated');
@@ -1254,7 +1257,7 @@
     
     async function carregarMotores() {
         try {
-            const response = await fetch('/api/motores/');
+            const response = await fetch(`${BASE_URL}/api/motores/`);
             if (response.ok) {
                 motores = await response.json();
                 atualizarSelectMotores();
@@ -1321,11 +1324,11 @@
         motores.sort((a, b) => a.id - b.id).forEach(motor => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="padding:8px;"><span class="motor-id-badge">#${motor.id}</span><table>
+                <td style="padding:8px;"><span class="motor-id-badge">#${motor.id}</span></td>
                 <td style="padding:8px;">${motor.nome}</td>
                 <td style="padding:8px;">${motor.marca}</td>
                 <td style="padding:8px;">${motor.rpm}</td>
-                <td style="padding:8px;">${motor.frequencia}</td>
+                <td style="padding:8px;">${motor.frequencia || motor.frequency || '-'}</td>
                 <td style="padding:8px;">${motor.cv}</td>
                 <td style="padding:8px;">
                     <button class="copy-btn" onclick="copiarIdMotor(${motor.id})">📋 Copiar ID</button>
@@ -1343,7 +1346,7 @@
         document.getElementById('motorNome').value = motor ? motor.nome : '';
         document.getElementById('motorMarca').value = motor ? motor.marca : '';
         document.getElementById('motorRpm').value = motor ? motor.rpm : 1800;
-        document.getElementById('motorFreq').value = motor ? motor.frequencia : 60;
+        document.getElementById('motorFreq').value = motor ? (motor.frequencia || motor.frequency) : 60;
         document.getElementById('motorCv').value = motor ? motor.cv : 10;
         document.getElementById('formTitle').innerHTML = motor ? '✏️ Editar Motor' : `➕ Adicionar Motor <span style="font-size:0.8rem; color:#2ecc71;">(ID: ${proximoId})</span>`;
         document.getElementById('motorFormModal').style.display = 'flex';
@@ -1361,12 +1364,12 @@
         try {
             let response;
             if (motorId) {
-                response = await fetch(`/api/motores/${motorId}/atualizar/`, {
+                response = await fetch(`${BASE_URL}/api/motores/${motorId}/atualizar/`, {
                     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados)
                 });
             } else {
                 const proximoId = calcularProximoId();
-                response = await fetch('/api/motores/criar/', {
+                response = await fetch(`${BASE_URL}/api/motores/criar/`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ...dados, id_desejado: proximoId })
                 });
@@ -1385,7 +1388,7 @@
     
     async function editarMotor(id) {
         try {
-            const response = await fetch(`/api/motores/${id}/`);
+            const response = await fetch(`${BASE_URL}/api/motores/${id}/`);
             if (response.ok) {
                 const motor = await response.json();
                 abrirFormMotor(motor);
@@ -1396,7 +1399,7 @@
     async function excluirMotor(id) {
         if (!confirm(`⚠️ Excluir o motor ID ${id}?`)) return;
         try {
-            const response = await fetch(`/api/motores/${id}/excluir/`, { method: 'DELETE' });
+            const response = await fetch(`${BASE_URL}/api/motores/${id}/excluir/`, { method: 'DELETE' });
             if (response.ok) {
                 showToast(`✅ Motor ID ${id} excluído!`);
                 if (motorSelecionado === id) {
@@ -1489,6 +1492,7 @@
     }
     
     function openAlarmModal() {
+        carregarMotores();
         renderMotorListForAlarm();
         document.getElementById('searchMotorInput').value = '';
         document.getElementById('searchMotorInput').oninput = filtrarMotoresAlarme;
@@ -1632,7 +1636,7 @@
     
     async function carregarCustomChartsData() {
         for (const chart of customCharts) {
-            let url = '/api/dados/';
+            let url = `${BASE_URL}/api/dados/`;
             if (chart.motorId) url += `?motor_id=${chart.motorId}`;
             try {
                 const response = await fetch(url);
@@ -1849,16 +1853,16 @@
     }
     
     function limparGraficos() {
-        tempChart.data.datasets[0].data = [];
-        tempChart.update();
-        rmsChart.data.datasets[0].data = [];
-        rmsChart.update();
-        horizontalChart.data.datasets[0].data = [];
-        horizontalChart.update();
-        verticalChart.data.datasets[0].data = [];
-        verticalChart.update();
-        axialChart.data.datasets[0].data = [];
-        axialChart.update();
+        if (tempChart) tempChart.data.datasets[0].data = [];
+        if (tempChart) tempChart.update();
+        if (rmsChart) rmsChart.data.datasets[0].data = [];
+        if (rmsChart) rmsChart.update();
+        if (horizontalChart) horizontalChart.data.datasets[0].data = [];
+        if (horizontalChart) horizontalChart.update();
+        if (verticalChart) verticalChart.data.datasets[0].data = [];
+        if (verticalChart) verticalChart.update();
+        if (axialChart) axialChart.data.datasets[0].data = [];
+        if (axialChart) axialChart.update();
         document.getElementById('tempValue').innerHTML = '-- °C';
         document.getElementById('rmsValue').innerHTML = '-- mm/s';
         document.getElementById('horizontalValue').innerHTML = '-- m/s²';
@@ -1881,9 +1885,11 @@
             return;
         }
         
-        let url = `/api/dados/?motor_id=${motorSelecionado}`;
+        let url = `${BASE_URL}/api/dados/?motor_id=${motorSelecionado}`;
         
-        fetch(url).then(response => response.json()).then(dados => {
+        try {
+            const response = await fetch(url);
+            const dados = await response.json();
             const noDataDiv = document.getElementById('noDataMessage');
             if (dados && dados.length > 0) {
                 dadosRecebidos = true;
@@ -1927,11 +1933,11 @@
                     pontosVert.push({ x: timestamp, y: item.vibZ });
                     pontosAxial.push({ x: timestamp, y: item.vibY });
                 });
-                tempChart.data.datasets[0].data = pontosTemp; tempChart.update();
-                rmsChart.data.datasets[0].data = pontosRms; rmsChart.update();
-                horizontalChart.data.datasets[0].data = pontosHoriz; horizontalChart.update();
-                verticalChart.data.datasets[0].data = pontosVert; verticalChart.update();
-                axialChart.data.datasets[0].data = pontosAxial; axialChart.update();
+                if (tempChart) { tempChart.data.datasets[0].data = pontosTemp; tempChart.update(); }
+                if (rmsChart) { rmsChart.data.datasets[0].data = pontosRms; rmsChart.update(); }
+                if (horizontalChart) { horizontalChart.data.datasets[0].data = pontosHoriz; horizontalChart.update(); }
+                if (verticalChart) { verticalChart.data.datasets[0].data = pontosVert; verticalChart.update(); }
+                if (axialChart) { axialChart.data.datasets[0].data = pontosAxial; axialChart.update(); }
             } else {
                 noDataDiv.style.display = 'block';
                 noDataDiv.innerHTML = `⚠️ Nenhum dado encontrado para o motor ID ${motorSelecionado}. Aguardando leituras...`;
@@ -1944,15 +1950,15 @@
                 const lista = document.getElementById('historicoLista');
                 lista.innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
             }
-        }).catch(error => {
+        } catch(error) {
             console.error('Erro ao buscar dados:', error);
             limparGraficos();
             document.getElementById('noDataMessage').style.display = 'block';
-            document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
-        });
+            document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor. Verifique se o servidor está rodando.';
+        }
         
         try {
-            const response = await fetch(`/api/analise/${motorSelecionado}/`);
+            const response = await fetch(`${BASE_URL}/api/analise/${motorSelecionado}/`);
             if (response.ok) {
                 const analise = await response.json();
                 if (analise.analise_basica) atualizarMetricasSKF(analise.analise_basica);
@@ -1968,7 +1974,7 @@
         } catch (err) { console.log('Análise avançada não disponível ainda'); }
         
         try {
-            const response = await fetch(`/api/fft/${motorSelecionado}/`);
+            const response = await fetch(`${BASE_URL}/api/fft/${motorSelecionado}/`);
             if (response.ok) { const fftData = await response.json(); atualizarGraficoFFT(fftData); }
         } catch (err) { console.log('FFT não disponível ainda'); }
     }
@@ -2029,7 +2035,8 @@
         const actions = [
             { id: 'menuDashboard', fn: showDashboard }, { id: 'menuDashboard2', fn: showDashboard },
             { id: 'menuCustomCharts', fn: showCustomCharts }, { id: 'menuCustomCharts2', fn: showCustomCharts },
-            { id: 'menuMotores', fn: () => document.getElementById('motoresModal').style.display = 'flex' }, { id: 'menuMotores2', fn: () => document.getElementById('motoresModal').style.display = 'flex' },
+            { id: 'menuMotores', fn: () => { carregarMotores(); document.getElementById('motoresModal').style.display = 'flex'; } }, 
+            { id: 'menuMotores2', fn: () => { carregarMotores(); document.getElementById('motoresModal').style.display = 'flex'; } },
             { id: 'menuConfig', fn: openAlarmModal }, { id: 'menuConfig2', fn: openAlarmModal },
             { id: 'menuExport', fn: () => showToast('📁 Dados exportados!') }, { id: 'menuExport2', fn: () => showToast('📁 Dados exportados!') },
             { id: 'menuAjuda', fn: () => showToast('❓ Selecione motor e configure escala para cada gráfico!') }, { id: 'menuAjuda2', fn: () => showToast('❓ Selecione motor e configure escala para cada gráfico!') },
