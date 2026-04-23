@@ -1235,7 +1235,7 @@
     let customCharts = [];
     let chartInstances = {};
     
-    // Mapeamento de variáveis
+    // Mapeamento de variáveis - CORRIGIDO
     const varNames = {
         'temperatura': '🌡️ Temperatura (°C)',
         'rms': '📊 RMS Total (m/s²)',
@@ -1731,6 +1731,7 @@
         }
     }
     
+    // CORRIGIDO: Adicionado suporte para 'rms' no mapeamento
     function atualizarCustomChart(chartId, variable, color, title, dados, minY, maxY) {
         const canvas = document.getElementById(`chart-${chartId}`);
         const loadingDiv = document.getElementById(`loading-${chartId}`);
@@ -1762,11 +1763,11 @@
             }
             let valor = 0;
             switch(variable) {
-                case 'temperatura': valor = item.temperatura; break;
-                case 'rms': valor = item.rms; break;
-                case 'vibX': valor = item.vibX; break;
-                case 'vibY': valor = item.vibY; break;
-                case 'vibZ': valor = item.vibZ; break;
+                case 'temperatura': valor = item.temperatura || 0; break;
+                case 'rms': valor = item.rms || 0; break;
+                case 'vibX': valor = item.vibX || 0; break;
+                case 'vibY': valor = item.vibY || 0; break;
+                case 'vibZ': valor = item.vibZ || 0; break;
                 default: valor = 0;
             }
             pontos.push({ x: timestamp, y: valor });
@@ -1866,7 +1867,6 @@
         });
     }
     
-    // 🔥 CORRIGIDO: Atualizar métricas SKF com verificações de segurança
     function atualizarMetricasSKF(analise) {
         if (!analise) return;
         
@@ -1926,9 +1926,7 @@
         document.getElementById('skfDiagnostico').innerHTML = diagnosticoHtml;
     }
     
-    // 🔥 CORRIGIDO: Atualizar gráfico FFT com verificações de segurança
     function atualizarGraficoFFT(fftData) {
-        // Verificação de segurança completa
         if (!fftData || !fftData.fft_data || !Array.isArray(fftData.fft_data) || fftData.fft_data.length === 0) {
             document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT (256 amostras)...';
             if (fftChart) {
@@ -1938,7 +1936,6 @@
             return;
         }
         
-        // Verificação de segurança para .toFixed()
         const freqMax = (fftData.freq_max !== undefined && fftData.freq_max !== null) ? fftData.freq_max.toFixed(1) : '--';
         const ampMax = (fftData.amp_max !== undefined && fftData.amp_max !== null) ? fftData.amp_max.toFixed(3) : '--';
         
@@ -1998,6 +1995,7 @@
         document.getElementById('axialValue').innerHTML = '-- m/s²';
     }
     
+    // CORRIGIDO: Adição de verificação para dados RMS
     async function carregarDadosAPI() {
         if (!motorSelecionado || motorSelecionado === '') {
             limparGraficos();
@@ -2015,103 +2013,105 @@
         
         let url = `/api/dados/?motor_id=${motorSelecionado}`;
         
-        fetch(url)
-            .then(response => response.json())
-            .then(dados => {
-                const noDataDiv = document.getElementById('noDataMessage');
+        try {
+            const response = await fetch(url);
+            const dados = await response.json();
+            
+            const noDataDiv = document.getElementById('noDataMessage');
+            
+            if (dados && dados.length > 0) {
+                dadosRecebidos = true;
+                noDataDiv.style.display = 'none';
                 
-                if (dados && dados.length > 0) {
-                    dadosRecebidos = true;
-                    noDataDiv.style.display = 'none';
-                    
-                    const dadosOrdenados = [...dados].reverse();
-                    const ultimo = dados[dados.length - 1];
-                    
-                    document.getElementById('tempAtual').innerText = ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--';
-                    document.getElementById('rmsAtual').innerText = ultimo.rms ? ultimo.rms.toFixed(2) : '--';
-                    document.getElementById('horizAtual').innerText = ultimo.vibX ? ultimo.vibX.toFixed(2) : '--';
-                    document.getElementById('vertAtual').innerText = ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--';
-                    document.getElementById('axialAtual').innerText = ultimo.vibY ? ultimo.vibY.toFixed(2) : '--';
-                    
-                    document.getElementById('tempValue').innerHTML = `${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'} °C`;
-                    document.getElementById('rmsValue').innerHTML = `${ultimo.rms ? ultimo.rms.toFixed(2) : '--'} m/s²`;
-                    document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX ? ultimo.vibX.toFixed(2) : '--'} m/s²`;
-                    document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--'} m/s²`;
-                    document.getElementById('axialValue').innerHTML = `${ultimo.vibY ? ultimo.vibY.toFixed(2) : '--'} m/s²`;
-                    
-                    const alarmConfig = alarmConfigs[motorSelecionado] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
-                    verificarEAlarm('cardRMS', ultimo.rms || 0, alarmConfig.rms);
-                    verificarEAlarm('cardX', ultimo.vibX || 0, alarmConfig.x);
-                    verificarEAlarm('cardY', ultimo.vibY || 0, alarmConfig.y);
-                    verificarEAlarm('cardZ', ultimo.vibZ || 0, alarmConfig.z);
-                    verificarEAlarm('cardTemp', ultimo.temperatura || 0, alarmConfig.temp);
-                    
-                    const lista = document.getElementById('historicoLista');
-                    if (lista.children.length === 1 && lista.children[0].innerText.includes("Aguardando")) lista.innerHTML = '';
-                    const li = document.createElement('li');
-                    li.innerHTML = `<span class="historico-tempo">${ultimo.data || '--'}</span><span>${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'}°C | RMS ${ultimo.rms ? ultimo.rms.toFixed(2) : '--'}</span>`;
-                    lista.insertBefore(li, lista.firstChild);
-                    if (lista.children.length > 10) lista.removeChild(lista.lastChild);
-                    
-                    const pontosTemp = [], pontosRms = [], pontosHoriz = [], pontosVert = [], pontosAxial = [];
-                    
-                    dadosOrdenados.forEach(item => {
-                        let timestamp = Date.now();
-                        if (item.data) {
-                            const [h, m, s] = item.data.split(':');
-                            const date = new Date();
-                            date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
-                            timestamp = date.getTime();
-                        }
-                        pontosTemp.push({ x: timestamp, y: item.temperatura || 0 });
-                        pontosRms.push({ x: timestamp, y: item.rms || 0 });
-                        pontosHoriz.push({ x: timestamp, y: item.vibX || 0 });
-                        pontosVert.push({ x: timestamp, y: item.vibZ || 0 });
-                        pontosAxial.push({ x: timestamp, y: item.vibY || 0 });
-                    });
-                    
-                    if (tempChart) {
-                        tempChart.data.datasets[0].data = pontosTemp;
-                        tempChart.update();
+                const dadosOrdenados = [...dados].reverse();
+                const ultimo = dados[dados.length - 1];
+                
+                document.getElementById('tempAtual').innerText = ultimo.temperatura !== undefined && ultimo.temperatura !== null ? ultimo.temperatura.toFixed(1) : '--';
+                document.getElementById('rmsAtual').innerText = ultimo.rms !== undefined && ultimo.rms !== null ? ultimo.rms.toFixed(2) : '--';
+                document.getElementById('horizAtual').innerText = ultimo.vibX !== undefined && ultimo.vibX !== null ? ultimo.vibX.toFixed(2) : '--';
+                document.getElementById('vertAtual').innerText = ultimo.vibZ !== undefined && ultimo.vibZ !== null ? ultimo.vibZ.toFixed(2) : '--';
+                document.getElementById('axialAtual').innerText = ultimo.vibY !== undefined && ultimo.vibY !== null ? ultimo.vibY.toFixed(2) : '--';
+                
+                document.getElementById('tempValue').innerHTML = `${ultimo.temperatura !== undefined && ultimo.temperatura !== null ? ultimo.temperatura.toFixed(1) : '--'} °C`;
+                document.getElementById('rmsValue').innerHTML = `${ultimo.rms !== undefined && ultimo.rms !== null ? ultimo.rms.toFixed(2) : '--'} m/s²`;
+                document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX !== undefined && ultimo.vibX !== null ? ultimo.vibX.toFixed(2) : '--'} m/s²`;
+                document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ !== undefined && ultimo.vibZ !== null ? ultimo.vibZ.toFixed(2) : '--'} m/s²`;
+                document.getElementById('axialValue').innerHTML = `${ultimo.vibY !== undefined && ultimo.vibY !== null ? ultimo.vibY.toFixed(2) : '--'} m/s²`;
+                
+                const alarmConfig = alarmConfigs[motorSelecionado] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
+                verificarEAlarm('cardRMS', ultimo.rms || 0, alarmConfig.rms);
+                verificarEAlarm('cardX', ultimo.vibX || 0, alarmConfig.x);
+                verificarEAlarm('cardY', ultimo.vibY || 0, alarmConfig.y);
+                verificarEAlarm('cardZ', ultimo.vibZ || 0, alarmConfig.z);
+                verificarEAlarm('cardTemp', ultimo.temperatura || 0, alarmConfig.temp);
+                
+                const lista = document.getElementById('historicoLista');
+                if (lista.children.length === 1 && lista.children[0].innerText.includes("Aguardando")) lista.innerHTML = '';
+                const li = document.createElement('li');
+                const tempVal = ultimo.temperatura !== undefined && ultimo.temperatura !== null ? ultimo.temperatura.toFixed(1) : '--';
+                const rmsVal = ultimo.rms !== undefined && ultimo.rms !== null ? ultimo.rms.toFixed(2) : '--';
+                li.innerHTML = `<span class="historico-tempo">${ultimo.data || '--'}</span><span>${tempVal}°C | RMS ${rmsVal}</span>`;
+                lista.insertBefore(li, lista.firstChild);
+                if (lista.children.length > 10) lista.removeChild(lista.lastChild);
+                
+                const pontosTemp = [], pontosRms = [], pontosHoriz = [], pontosVert = [], pontosAxial = [];
+                
+                dadosOrdenados.forEach(item => {
+                    let timestamp = Date.now();
+                    if (item.data) {
+                        const [h, m, s] = item.data.split(':');
+                        const date = new Date();
+                        date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
+                        timestamp = date.getTime();
                     }
-                    if (rmsChart) {
-                        rmsChart.data.datasets[0].data = pontosRms;
-                        rmsChart.update();
-                    }
-                    if (horizontalChart) {
-                        horizontalChart.data.datasets[0].data = pontosHoriz;
-                        horizontalChart.update();
-                    }
-                    if (verticalChart) {
-                        verticalChart.data.datasets[0].data = pontosVert;
-                        verticalChart.update();
-                    }
-                    if (axialChart) {
-                        axialChart.data.datasets[0].data = pontosAxial;
-                        axialChart.update();
-                    }
-                    
-                } else {
-                    noDataDiv.style.display = 'block';
-                    noDataDiv.innerHTML = `⚠️ Nenhum dado encontrado para o motor ID ${motorSelecionado}. Aguardando leituras...`;
-                    limparGraficos();
-                    document.getElementById('tempAtual').innerText = '--';
-                    document.getElementById('rmsAtual').innerText = '--';
-                    document.getElementById('horizAtual').innerText = '--';
-                    document.getElementById('vertAtual').innerText = '--';
-                    document.getElementById('axialAtual').innerText = '--';
-                    const lista = document.getElementById('historicoLista');
-                    lista.innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
+                    pontosTemp.push({ x: timestamp, y: item.temperatura !== undefined && item.temperatura !== null ? item.temperatura : 0 });
+                    pontosRms.push({ x: timestamp, y: item.rms !== undefined && item.rms !== null ? item.rms : 0 });
+                    pontosHoriz.push({ x: timestamp, y: item.vibX !== undefined && item.vibX !== null ? item.vibX : 0 });
+                    pontosVert.push({ x: timestamp, y: item.vibZ !== undefined && item.vibZ !== null ? item.vibZ : 0 });
+                    pontosAxial.push({ x: timestamp, y: item.vibY !== undefined && item.vibY !== null ? item.vibY : 0 });
+                });
+                
+                if (tempChart) {
+                    tempChart.data.datasets[0].data = pontosTemp;
+                    tempChart.update();
                 }
-            })
-            .catch(error => {
-                console.error('Erro ao buscar dados:', error);
+                if (rmsChart) {
+                    rmsChart.data.datasets[0].data = pontosRms;
+                    rmsChart.update();
+                }
+                if (horizontalChart) {
+                    horizontalChart.data.datasets[0].data = pontosHoriz;
+                    horizontalChart.update();
+                }
+                if (verticalChart) {
+                    verticalChart.data.datasets[0].data = pontosVert;
+                    verticalChart.update();
+                }
+                if (axialChart) {
+                    axialChart.data.datasets[0].data = pontosAxial;
+                    axialChart.update();
+                }
+                
+            } else {
+                noDataDiv.style.display = 'block';
+                noDataDiv.innerHTML = `⚠️ Nenhum dado encontrado para o motor ID ${motorSelecionado}. Aguardando leituras...`;
                 limparGraficos();
-                document.getElementById('noDataMessage').style.display = 'block';
-                document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
-            });
+                document.getElementById('tempAtual').innerText = '--';
+                document.getElementById('rmsAtual').innerText = '--';
+                document.getElementById('horizAtual').innerText = '--';
+                document.getElementById('vertAtual').innerText = '--';
+                document.getElementById('axialAtual').innerText = '--';
+                const lista = document.getElementById('historicoLista');
+                lista.innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
+            }
+        } catch (error) {
+            console.error('Erro ao buscar dados:', error);
+            limparGraficos();
+            document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
+        }
         
-        // 🔥 Buscar análise avançada (FFT e métricas SKF) com tratamento de erro
+        // 🔥 Buscar análise avançada (FFT e métricas SKF)
         try {
             const response = await fetch(`/api/analise/${motorSelecionado}/`);
             if (response.ok) {
@@ -2130,11 +2130,10 @@
             console.log('Análise avançada não disponível ainda:', err);
         }
         
-        // 🔥 Buscar dados FFT com tratamento de erro completo
+        // 🔥 Buscar dados FFT
         try {
             const response = await fetch(`/api/fft/${motorSelecionado}/`);
             
-            // Verificar se a resposta é OK antes de processar
             if (!response.ok) {
                 console.warn(`FFT não disponível: ${response.status} - ${response.statusText}`);
                 document.getElementById('fftStatus').innerHTML = `⏳ FFT indisponível (HTTP ${response.status}) - Aguardando amostras...`;
@@ -2143,7 +2142,6 @@
             
             const fftData = await response.json();
             
-            // Verificar se os dados existem e têm a estrutura esperada
             if (fftData && fftData.fft_data && Array.isArray(fftData.fft_data) && fftData.fft_data.length > 0) {
                 atualizarGraficoFFT(fftData);
             } else {
