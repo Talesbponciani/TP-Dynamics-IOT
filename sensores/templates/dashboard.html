@@ -972,7 +972,7 @@
         </div>
     </div>
 
-    <!-- 🔥 NOVO: Gráfico FFT (Espectro de Frequências) -->
+    <!-- 🔥 GRÁFICO FFT EM LINHA -->
     <div class="chart-container fft-container">
         <h3>🎵 Espectro de Frequências (FFT) - Análise de Vibração</h3>
         <canvas id="fftChart" style="max-height: 250px;"></canvas>
@@ -1844,23 +1844,47 @@
         });
     }
     
-    // 🔥 NOVO: Criar gráfico FFT
+    // 🔥 GRÁFICO FFT EM LINHA - CORRIGIDO
     function criarGraficoFFT() {
         const ctx = document.getElementById('fftChart').getContext('2d');
         if (fftChart) fftChart.destroy();
         fftChart = new Chart(ctx, {
-            type: 'bar',
-            data: { datasets: [{ label: 'Amplitude (m/s²)', data: [], backgroundColor: '#3498db', borderWidth: 0, barPercentage: 0.8 }] },
+            type: 'line',  // ALTERADO DE 'bar' PARA 'line'
+            data: { 
+                datasets: [{ 
+                    label: 'Amplitude (m/s²)', 
+                    data: [], 
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52,152,219,0.1)', 
+                    borderWidth: 2,
+                    fill: true,
+                    pointRadius: 2,
+                    pointBackgroundColor: '#3498db',
+                    pointBorderColor: '#fff',
+                    tension: 0.1
+                }] 
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: true,
                 plugins: { 
                     legend: { display: false },
-                    tooltip: { callbacks: { label: (ctx) => `${ctx.raw.y.toFixed(3)} m/s²` } }
+                    tooltip: { 
+                        callbacks: { 
+                            label: (ctx) => `${ctx.raw.y.toFixed(3)} m/s²` 
+                        } 
+                    }
                 },
                 scales: {
-                    x: { title: { display: true, text: 'Frequência (Hz)', color: '#aaa' }, ticks: { color: '#aaa' } },
-                    y: { title: { display: true, text: 'Amplitude (m/s²)', color: '#aaa' }, ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    x: { 
+                        title: { display: true, text: 'Frequência (Hz)', color: '#aaa' }, 
+                        ticks: { color: '#aaa' } 
+                    },
+                    y: { 
+                        title: { display: true, text: 'Amplitude (m/s²)', color: '#aaa' }, 
+                        ticks: { color: '#aaa' }, 
+                        grid: { color: 'rgba(255,255,255,0.1)' } 
+                    }
                 }
             }
         });
