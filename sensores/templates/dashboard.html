@@ -297,7 +297,10 @@
         .status-alerta { color: #f1c40f; }
         .status-critico { color: #e74c3c; }
         
+<<<<<<< HEAD
         /* Cards com tamanho único - largura e altura fixas */
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         .card {
             background: rgba(30,30,30,0.75);
             backdrop-filter: blur(8px);
@@ -376,7 +379,10 @@
         canvas { width: 100% !important; height: auto !important; max-height: 200px; }
         h3 { margin: 0 0 10px 0; font-size: 0.9rem; color: #eee; }
         
+<<<<<<< HEAD
         /* 🔥 NOVOS ESTILOS PARA MÉTRICAS SKF E FFT */
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         .skf-metrics-panel {
             background: rgba(20,20,20,0.7);
             backdrop-filter: blur(8px);
@@ -891,7 +897,11 @@
 
     <div class="top-panel">
         <div class="indicadores">
+<<<<<<< HEAD
             <div class="card rms-card" id="cardRMS"><h4>📈 RMS Total</h4><div class="valor" id="rmsAtual">--</div><div class="unidade">m/s²</div></div>
+=======
+            <div class="card rms-card" id="cardRMS"><h4>📈 Velocidade RMS</h4><div class="valor" id="rmsAtual">--</div><div class="unidade">mm/s</div></div>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             <div class="card horizontal-card" id="cardX"><h4>🔵 Horizontal (X)</h4><div class="valor" id="horizAtual">--</div><div class="unidade">m/s²</div></div>
             <div class="card vertical-card" id="cardZ"><h4>🟠 Vertical (Z)</h4><div class="valor" id="vertAtual">--</div><div class="unidade">m/s²</div></div>
             <div class="card axial-card" id="cardY"><h4>🟢 Axial (Y)</h4><div class="valor" id="axialAtual">--</div><div class="unidade">m/s²</div></div>
@@ -905,7 +915,10 @@
         </div>
     </div>
 
+<<<<<<< HEAD
     <!-- 🔥 NOVO: Painel de Métricas SKF -->
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     <div class="skf-metrics-panel">
         <h3 style="margin:0 0 10px 0;">🔬 Análise Avançada - Estilo SKF</h3>
         <div class="skf-metrics-grid">
@@ -951,32 +964,56 @@
             <canvas id="tempChart"></canvas>
         </div>
         <div class="chart-container">
+<<<<<<< HEAD
             <div class="current-value" id="rmsValue">-- m/s²</div>
             <h3>📈 RMS Total (m/s²)</h3>
+=======
+            <div class="current-value" id="rmsValue">-- mm/s</div>
+            <h3>📊 Velocidade RMS (mm/s) - ISO 20816-3</h3>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             <canvas id="rmsChart"></canvas>
         </div>
         <div class="chart-container">
             <div class="current-value" id="horizontalValue">-- m/s²</div>
+<<<<<<< HEAD
             <h3>🔵 Horizontal (X)</h3>
+=======
+            <h3>🔵 Horizontal X (Aceleração - m/s²)</h3>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             <canvas id="horizontalChart"></canvas>
         </div>
         <div class="chart-container">
             <div class="current-value" id="verticalValue">-- m/s²</div>
+<<<<<<< HEAD
             <h3>🟠 Vertical (Z)</h3>
+=======
+            <h3>🟠 Vertical Z (Aceleração - m/s²)</h3>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             <canvas id="verticalChart"></canvas>
         </div>
         <div class="chart-container">
             <div class="current-value" id="axialValue">-- m/s²</div>
+<<<<<<< HEAD
             <h3>🟢 Axial (Y)</h3>
+=======
+            <h3>🟢 Axial Y (Aceleração - m/s²)</h3>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             <canvas id="axialChart"></canvas>
         </div>
     </div>
 
+<<<<<<< HEAD
     <!-- 🔥 NOVO: Gráfico FFT (Espectro de Frequências) -->
     <div class="chart-container fft-container">
         <h3>🎵 Espectro de Frequências (FFT) - Análise de Vibração</h3>
         <canvas id="fftChart" style="max-height: 250px;"></canvas>
         <div id="fftStatus" style="text-align:center; color:#aaa; font-size:0.7rem; margin-top:8px;">⏳ Aguardando amostras para FFT (256 amostras)...</div>
+=======
+    <div class="chart-container fft-container">
+        <h3>🎵 Espectro de Frequências (FFT) - Análise de Vibração</h3>
+        <canvas id="fftChart" style="max-height: 250px;"></canvas>
+        <div id="fftStatus" style="text-align:center; color:#aaa; font-size:0.7rem; margin-top:8px;">⏳ Aguardando amostras para FFT...</div>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     </div>
 </div>
 
@@ -1014,10 +1051,17 @@
             <label>📈 Variável</label>
             <select id="newChartVariable">
                 <option value="temperatura">🌡️ Temperatura</option>
+<<<<<<< HEAD
                 <option value="rms">📊 RMS Total</option>
                 <option value="vibX">🔵 Horizontal (X)</option>
                 <option value="vibY">🟢 Axial (Y)</option>
                 <option value="vibZ">🟠 Vertical (Z)</option>
+=======
+                <option value="rms">📊 Velocidade RMS (mm/s)</option>
+                <option value="vibX">🔵 Horizontal X (m/s²)</option>
+                <option value="vibY">🟢 Axial Y (m/s²)</option>
+                <option value="vibZ">🟠 Vertical Z (m/s²)</option>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             </select>
         </div>
         <div>
@@ -1053,7 +1097,11 @@
     </div>
 </div>
 
+<<<<<<< HEAD
 <!-- Modal de Configuração de Alarmes -->
+=======
+<!-- Modais -->
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
 <div id="configModal" class="modal">
     <div class="modal-content">
         <h2>⚙️ Configurar Alarmes</h2>
@@ -1067,7 +1115,11 @@
             <div id="selectedMotorDisplay" class="selected-motor-display" style="display: none;"></div>
         </div>
         <div id="alarmConfigArea" class="alarm-config-section" style="display: none;">
+<<<<<<< HEAD
             <label>🚨 Limite RMS Total (m/s²):</label>
+=======
+            <label>🚨 Limite Velocidade RMS (mm/s):</label>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             <input type="number" id="alarmRMS" step="0.1" value="3.0">
             <label>🔵 Limite Eixo X (m/s²):</label>
             <input type="number" id="alarmX" step="0.1" value="3.0">
@@ -1086,7 +1138,10 @@
     </div>
 </div>
 
+<<<<<<< HEAD
 <!-- Modal de Gerenciar Motores -->
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
 <div id="motoresModal" class="modal">
     <div class="modal-content" style="max-width: 700px;">
         <h2>📋 Gerenciar Motores</h2>
@@ -1109,7 +1164,10 @@
     </div>
 </div>
 
+<<<<<<< HEAD
 <!-- Modal de Formulário de Motor -->
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
 <div id="motorFormModal" class="modal">
     <div class="modal-content">
         <h2 id="formTitle">➕ Adicionar Motor</h2>
@@ -1132,7 +1190,10 @@
     </div>
 </div>
 
+<<<<<<< HEAD
 <!-- Modal de Edição de Gráfico Personalizado -->
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
 <div id="editChartModal" class="modal">
     <div class="modal-content">
         <h2>✏️ Editar Gráfico</h2>
@@ -1144,10 +1205,17 @@
         <label>📈 Variável:</label>
         <select id="editChartVariable">
             <option value="temperatura">🌡️ Temperatura</option>
+<<<<<<< HEAD
             <option value="rms">📊 RMS Total</option>
             <option value="vibX">🔵 Horizontal (X)</option>
             <option value="vibY">🟢 Axial (Y)</option>
             <option value="vibZ">🟠 Vertical (Z)</option>
+=======
+            <option value="rms">📊 Velocidade RMS (mm/s)</option>
+            <option value="vibX">🔵 Horizontal X (m/s²)</option>
+            <option value="vibY">🟢 Axial Y (m/s²)</option>
+            <option value="vibZ">🟠 Vertical Z (m/s²)</option>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         </select>
         <label>🎨 Cor:</label>
         <select id="editChartColor">
@@ -1171,8 +1239,11 @@
 </div>
 
 <div id="toastMsg" class="toast"></div>
+<<<<<<< HEAD
 
 <!-- Rodapé fixo com créditos para todas as páginas -->
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
 <div class="footer-credit">✍️ Criado por Tales Benites Ponciani</div>
 
 <script>
@@ -1197,7 +1268,10 @@
     function performLogin() {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
+<<<<<<< HEAD
         
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         if (username === 'admin' && password === 'admin') {
             sessionStorage.setItem('authenticated', 'true');
             document.getElementById('loginError').style.display = 'none';
@@ -1227,6 +1301,7 @@
     let motorAlarmSelecionado = null;
     let alarmConfigs = {};
     let pollingInterval = null;
+<<<<<<< HEAD
     
     // 🔥 NOVAS VARIÁVEIS PARA FFT
     let fftChart = null;
@@ -1239,6 +1314,15 @@
     const varNames = {
         'temperatura': '🌡️ Temperatura (°C)',
         'rms': '📊 RMS Total (m/s²)',
+=======
+    let fftChart = null;
+    let customCharts = [];
+    let chartInstances = {};
+    
+    const varNames = {
+        'temperatura': '🌡️ Temperatura (°C)',
+        'rms': '📊 Velocidade RMS (mm/s)',
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         'vibX': '🔵 Horizontal X (m/s²)',
         'vibY': '🟢 Axial Y (m/s²)',
         'vibZ': '🟠 Vertical Z (m/s²)'
@@ -1254,11 +1338,15 @@
     function showCustomCharts() {
         document.getElementById('dashboardContainer').style.display = 'none';
         document.getElementById('customChartsContainer').style.display = 'block';
+<<<<<<< HEAD
         setTimeout(() => {
             if (customCharts.length > 0) {
                 carregarCustomChartsData();
             }
         }, 200);
+=======
+        setTimeout(() => { if (customCharts.length > 0) carregarCustomChartsData(); }, 200);
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     }
     
     // ==================== CARREGAR MOTORES ====================
@@ -1282,14 +1370,21 @@
                 renderTabelaMotores();
                 renderMotorListForAlarm();
                 carregarAlarmConfigs();
+<<<<<<< HEAD
                 
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
                 const proximoId = calcularProximoId();
                 const nextIdInfo = document.getElementById('nextIdInfo');
                 if (nextIdInfo) nextIdInfo.innerHTML = `🔹 Próximo ID: ${proximoId}`;
             }
+<<<<<<< HEAD
         } catch (err) {
             console.error('Erro ao carregar motores:', err);
         }
+=======
+        } catch (err) { console.error('Erro ao carregar motores:', err); }
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     }
     
     function atualizarSelectMotores() {
@@ -1315,6 +1410,7 @@
     }
     
     function atualizarSelectMotorParaGraficos() {
+<<<<<<< HEAD
         const selects = ['editChartMotor'];
         selects.forEach(selectId => {
             const select = document.getElementById(selectId);
@@ -1328,11 +1424,27 @@
                 });
             }
         });
+=======
+        const select = document.getElementById('editChartMotor');
+        if (select) {
+            select.innerHTML = '<option value="">Todos os motores</option>';
+            motores.forEach(motor => {
+                const option = document.createElement('option');
+                option.value = motor.id;
+                option.textContent = `[ID ${motor.id}] ${motor.nome} - ${motor.marca}`;
+                select.appendChild(option);
+            });
+        }
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     }
     
     function copiarIdMotor(id) {
         navigator.clipboard.writeText(id.toString());
+<<<<<<< HEAD
         showToast(`✅ ID ${id} copiado! Configure no ESP32 com motor_id = ${id}`, 3000);
+=======
+        showToast(`✅ ID ${id} copiado!`, 3000);
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     }
     
     function renderTabelaMotores() {
@@ -1346,7 +1458,11 @@
         motores.sort((a, b) => a.id - b.id).forEach(motor => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
+<<<<<<< HEAD
                 <td style="padding:8px;"><span class="motor-id-badge">#${motor.id}</span></td>
+=======
+                <td style="padding:8px;"><span class="motor-id-badge">#${motor.id}</span><table>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
                 <td style="padding:8px;">${motor.nome}</td>
                 <td style="padding:8px;">${motor.marca}</td>
                 <td style="padding:8px;">${motor.rpm}</td>
@@ -1405,9 +1521,13 @@
                 const erro = await response.json();
                 showToast(`❌ Erro: ${erro.erro || 'Erro desconhecido'}`);
             }
+<<<<<<< HEAD
         } catch (err) {
             showToast('❌ Erro de conexão');
         }
+=======
+        } catch (err) { showToast('❌ Erro de conexão'); }
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     }
     
     async function editarMotor(id) {
@@ -1421,7 +1541,11 @@
     }
     
     async function excluirMotor(id) {
+<<<<<<< HEAD
         if (!confirm(`⚠️ Excluir o motor ID ${id}? Este ID será reutilizado.`)) return;
+=======
+        if (!confirm(`⚠️ Excluir o motor ID ${id}?`)) return;
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         try {
             const response = await fetch(`/api/motores/${id}/excluir/`, { method: 'DELETE' });
             if (response.ok) {
@@ -1434,18 +1558,26 @@
                 delete alarmConfigs[id];
                 salvarAlarmConfigs();
                 await carregarMotores();
+<<<<<<< HEAD
             } else {
                 showToast('❌ Erro ao excluir');
             }
+=======
+            } else { showToast('❌ Erro ao excluir'); }
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         } catch (err) { showToast('❌ Erro de conexão'); }
     }
     
     // ==================== CONFIGURAÇÕES DE ALARME ====================
     function carregarAlarmConfigs() {
         const saved = localStorage.getItem('tpDynamicsAlarmsByMotor');
+<<<<<<< HEAD
         if (saved) {
             try { alarmConfigs = JSON.parse(saved); } catch(e) {}
         }
+=======
+        if (saved) { try { alarmConfigs = JSON.parse(saved); } catch(e) {} }
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     }
     
     function salvarAlarmConfigs() {
@@ -1492,9 +1624,13 @@
     function filtrarMotoresAlarme() {
         const searchTerm = document.getElementById('searchMotorInput').value.toLowerCase();
         const items = document.querySelectorAll('#motorListAlarm .motor-item');
+<<<<<<< HEAD
         items.forEach(item => {
             item.style.display = item.textContent.toLowerCase().includes(searchTerm) ? 'flex' : 'none';
         });
+=======
+        items.forEach(item => { item.style.display = item.textContent.toLowerCase().includes(searchTerm) ? 'flex' : 'none'; });
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     }
     
     function saveAlarmForMotor() {
@@ -1534,6 +1670,7 @@
     // ==================== GRÁFICOS PERSONALIZADOS ====================
     function carregarCustomCharts() {
         const saved = localStorage.getItem('tpDynamicsCustomCharts');
+<<<<<<< HEAD
         if (saved) {
             try { customCharts = JSON.parse(saved); } catch(e) { customCharts = []; }
         } else {
@@ -1545,6 +1682,14 @@
     function salvarCustomCharts() {
         localStorage.setItem('tpDynamicsCustomCharts', JSON.stringify(customCharts));
     }
+=======
+        if (saved) { try { customCharts = JSON.parse(saved); } catch(e) { customCharts = []; } }
+        else { customCharts = []; }
+        renderCustomCharts();
+    }
+    
+    function salvarCustomCharts() { localStorage.setItem('tpDynamicsCustomCharts', JSON.stringify(customCharts)); }
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     
     function adicionarChart() {
         const title = document.getElementById('newChartTitle').value.trim();
@@ -1553,6 +1698,7 @@
         const color = document.getElementById('newChartColor').value;
         const minY = document.getElementById('newChartMin').value;
         const maxY = document.getElementById('newChartMax').value;
+<<<<<<< HEAD
         
         if (!title) { showToast('❌ Insira um título!', 2000); return; }
         
@@ -1576,6 +1722,16 @@
             carregarCustomChartsData();
         }, 100);
         
+=======
+        if (!title) { showToast('❌ Insira um título!', 2000); return; }
+        customCharts.push({ id: Date.now(), title: title, motorId: motorId || null, variable: variable, color: color, minY: minY ? parseFloat(minY) : null, maxY: maxY ? parseFloat(maxY) : null });
+        salvarCustomCharts();
+        renderCustomCharts();
+        document.getElementById('newChartTitle').value = '';
+        document.getElementById('newChartMin').value = '';
+        document.getElementById('newChartMax').value = '';
+        setTimeout(() => { carregarCustomChartsData(); }, 100);
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         showToast(`✅ Gráfico "${title}" adicionado!`, 2000);
     }
     
@@ -1606,7 +1762,10 @@
     function salvarEditChart() {
         const chartId = parseInt(document.getElementById('editChartId').value);
         const index = customCharts.findIndex(c => c.id === chartId);
+<<<<<<< HEAD
         
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         if (index !== -1) {
             customCharts[index] = {
                 id: chartId,
@@ -1620,11 +1779,15 @@
             salvarCustomCharts();
             renderCustomCharts();
             document.getElementById('editChartModal').style.display = 'none';
+<<<<<<< HEAD
             
             setTimeout(() => {
                 carregarCustomChartsData();
             }, 100);
             
+=======
+            setTimeout(() => { carregarCustomChartsData(); }, 100);
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             showToast(`✅ Gráfico atualizado!`, 2000);
         }
     }
@@ -1647,7 +1810,10 @@
             customCharts[index].minY = minInput.value ? parseFloat(minInput.value) : null;
             customCharts[index].maxY = maxInput.value ? parseFloat(maxInput.value) : null;
             salvarCustomCharts();
+<<<<<<< HEAD
             
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             if (chartInstances[chartId]) {
                 const options = chartInstances[chartId].options;
                 if (options.scales.y) {
@@ -1655,9 +1821,13 @@
                     options.scales.y.max = customCharts[index].maxY;
                     chartInstances[chartId].update();
                 }
+<<<<<<< HEAD
             } else {
                 carregarCustomChartsData();
             }
+=======
+            } else { carregarCustomChartsData(); }
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             showToast(`✅ Escala do gráfico atualizada!`, 2000);
         }
     }
@@ -1671,7 +1841,10 @@
         grid.innerHTML = '';
         customCharts.forEach(chart => {
             const motorOptions = motores.map(m => `<option value="${m.id}" ${chart.motorId == m.id ? 'selected' : ''}>[ID ${m.id}] ${m.nome}</option>`).join('');
+<<<<<<< HEAD
             
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             const card = document.createElement('div');
             card.className = 'custom-chart-card';
             card.id = `chart-card-${chart.id}`;
@@ -1679,6 +1852,7 @@
                 <div class="chart-header">
                     <span class="chart-title">${chart.title}</span>
                     <div class="chart-config">
+<<<<<<< HEAD
                         <div>
                             <label>🎯 Motor:</label>
                             <select id="motor-select-${chart.id}" onchange="atualizarMotorChart(${chart.id}, this.value)">
@@ -1698,6 +1872,12 @@
                             <button class="btn-edit-chart" onclick="abrirEditChart(${chart.id})" title="Editar">✏️</button>
                             <button class="btn-remove-chart" onclick="removerChart(${chart.id})" title="Remover">🗑️</button>
                         </div>
+=======
+                        <div><label>🎯 Motor:</label><select id="motor-select-${chart.id}" onchange="atualizarMotorChart(${chart.id}, this.value)"><option value="">Todos os motores</option>${motorOptions}</select></div>
+                        <div><label>📏 Mín:</label><input type="number" id="min-${chart.id}" step="0.1" placeholder="Auto" value="${chart.minY !== null ? chart.minY : ''}" style="width:60px;" onchange="atualizarEscalaChart(${chart.id})"></div>
+                        <div><label>📏 Máx:</label><input type="number" id="max-${chart.id}" step="0.1" placeholder="Auto" value="${chart.maxY !== null ? chart.maxY : ''}" style="width:60px;" onchange="atualizarEscalaChart(${chart.id})"></div>
+                        <div class="chart-controls"><button class="btn-edit-chart" onclick="abrirEditChart(${chart.id})" title="Editar">✏️</button><button class="btn-remove-chart" onclick="removerChart(${chart.id})" title="Remover">🗑️</button></div>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
                     </div>
                 </div>
                 <canvas id="chart-${chart.id}" style="width:100%; max-height:250px;"></canvas>
@@ -1710,21 +1890,31 @@
     async function carregarCustomChartsData() {
         for (const chart of customCharts) {
             let url = '/api/dados/';
+<<<<<<< HEAD
             if (chart.motorId) {
                 url += `?motor_id=${chart.motorId}`;
             }
+=======
+            if (chart.motorId) url += `?motor_id=${chart.motorId}`;
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
             try {
                 const response = await fetch(url);
                 if (response.ok) {
                     const dados = await response.json();
                     atualizarCustomChart(chart.id, chart.variable, chart.color, chart.title, dados, chart.minY, chart.maxY);
                 } else {
+<<<<<<< HEAD
                     console.error(`Erro ao carregar dados para ${chart.title}:`, response.status);
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
                     const loadingDiv = document.getElementById(`loading-${chart.id}`);
                     if (loadingDiv) loadingDiv.innerHTML = '❌ Erro ao carregar dados';
                 }
             } catch (err) { 
+<<<<<<< HEAD
                 console.error('Erro:', err);
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
                 const loadingDiv = document.getElementById(`loading-${chart.id}`);
                 if (loadingDiv) loadingDiv.innerHTML = '❌ Erro de conexão';
             }
@@ -1734,6 +1924,7 @@
     function atualizarCustomChart(chartId, variable, color, title, dados, minY, maxY) {
         const canvas = document.getElementById(`chart-${chartId}`);
         const loadingDiv = document.getElementById(`loading-${chartId}`);
+<<<<<<< HEAD
         
         if (!canvas) return;
         
@@ -1752,6 +1943,17 @@
         const dadosOrdenados = [...dados].reverse();
         const pontos = [];
         
+=======
+        if (!canvas) return;
+        if (loadingDiv) loadingDiv.style.display = 'none';
+        const ctx = canvas.getContext('2d');
+        if (!dados || dados.length === 0) {
+            if (loadingDiv) { loadingDiv.style.display = 'block'; loadingDiv.innerHTML = '📭 Nenhum dado disponível ainda.'; }
+            return;
+        }
+        const dadosOrdenados = [...dados].reverse();
+        const pontos = [];
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         dadosOrdenados.forEach(item => {
             let timestamp = Date.now();
             if (item.data) {
@@ -1771,6 +1973,7 @@
             }
             pontos.push({ x: timestamp, y: valor });
         });
+<<<<<<< HEAD
         
         if (chartInstances[chartId]) {
             chartInstances[chartId].destroy();
@@ -1826,6 +2029,19 @@
                 loadingDiv.innerHTML = '❌ Erro ao criar gráfico';
             }
         }
+=======
+        if (chartInstances[chartId]) { chartInstances[chartId].destroy(); delete chartInstances[chartId]; }
+        const yConfig = {};
+        if (minY !== null && minY !== undefined && !isNaN(minY)) yConfig.min = minY;
+        if (maxY !== null && maxY !== undefined && !isNaN(maxY)) yConfig.max = maxY;
+        try {
+            chartInstances[chartId] = new Chart(ctx, {
+                type: 'line',
+                data: { datasets: [{ label: varNames[variable] || variable, data: pontos, borderColor: color, backgroundColor: color + '20', borderWidth: 2, fill: true, pointRadius: 3, tension: 0.1 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { mode: 'index', intersect: false }, legend: { labels: { color: '#fff' } } }, scales: { x: { type: 'time', time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } }, ticks: { color: '#ccc' }, title: { display: true, text: 'Tempo', color: '#ccc' } }, y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.1)' }, title: { display: true, text: varNames[variable] || variable, color: '#ccc' }, ...yConfig } } }
+            });
+        } catch (err) { console.error('Erro:', err); }
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     }
     
     // ==================== DASHBOARD PRINCIPAL ====================
@@ -1836,6 +2052,7 @@
         return new Chart(ctx, {
             type: 'line',
             data: { datasets: [{ label: label, data: [], borderColor: cor, backgroundColor: 'transparent', borderWidth: 2, fill: false, pointRadius: 3, tension: 0.1 }] },
+<<<<<<< HEAD
             options: {
                 responsive: true, maintainAspectRatio: true,
                 scales: { x: { type: 'time', time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } }, ticks: { color: '#ccc' } }, y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.1)' } } },
@@ -1845,10 +2062,17 @@
     }
     
     // 🔥 NOVO: Criar gráfico FFT
+=======
+            options: { responsive: true, maintainAspectRatio: true, scales: { x: { type: 'time', time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } }, ticks: { color: '#ccc' } }, y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.1)' } } }, plugins: { legend: { labels: { color: '#fff' } } } }
+        });
+    }
+    
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     function criarGraficoFFT() {
         const ctx = document.getElementById('fftChart').getContext('2d');
         if (fftChart) fftChart.destroy();
         fftChart = new Chart(ctx, {
+<<<<<<< HEAD
             type: 'bar',
             data: { datasets: [{ label: 'Amplitude (m/s²)', data: [], backgroundColor: '#3498db', borderWidth: 0, barPercentage: 0.8 }] },
             options: {
@@ -1861,15 +2085,89 @@
                 scales: {
                     x: { title: { display: true, text: 'Frequência (Hz)', color: '#aaa' }, ticks: { color: '#aaa' } },
                     y: { title: { display: true, text: 'Amplitude (m/s²)', color: '#aaa' }, ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+=======
+            type: 'line',
+            data: { 
+                datasets: [{ 
+                    label: 'Espectro FFT', 
+                    data: [], 
+                    borderColor: '#e74c3c', 
+                    backgroundColor: 'transparent', 
+                    borderWidth: 2, 
+                    pointRadius: 2,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#e74c3c',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1,
+                    fill: false, 
+                    tension: 0 
+                }] 
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: { 
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: '#f39c12',
+                        bodyColor: '#fff',
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                return `📊 Análise Espectral`;
+                            },
+                            label: function(context) {
+                                const freq = context.parsed.x;
+                                const amp = context.parsed.y;
+                                return [
+                                    `🎵 Frequência: ${freq.toFixed(2)} Hz`,
+                                    `📈 Amplitude: ${amp.toFixed(4)} m/s²`,
+                                    `🔍 Status: ${amp > 0.01 ? '⚠️ Vibração detectada' : '✅ Normal'}`
+                                ];
+                            }
+                        }
+                    },
+                    legend: { 
+                        labels: { color: '#fff' },
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: { 
+                        title: { display: true, text: 'Frequência (Hz)', color: '#aaa' }, 
+                        ticks: { color: '#aaa' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    y: { 
+                        title: { display: true, text: 'Amplitude (m/s²)', color: '#aaa' }, 
+                        ticks: { color: '#aaa' }, 
+                        grid: { color: 'rgba(255,255,255,0.1)' },
+                        beginAtZero: true
+                    }
+                },
+                onHover: (event, chartElement) => {
+                    const canvas = document.getElementById('fftChart');
+                    canvas.style.cursor = chartElement.length ? 'pointer' : 'default';
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
                 }
             }
         });
     }
     
+<<<<<<< HEAD
     // 🔥 NOVO: Atualizar métricas SKF
     function atualizarMetricasSKF(analise) {
         if (!analise) return;
         
+=======
+    function atualizarMetricasSKF(analise) {
+        if (!analise) return;
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         if (analise.crest_factor) document.getElementById('skfCrest').innerHTML = analise.crest_factor.toFixed(2);
         if (analise.kurtosis) {
             const kurtosisEl = document.getElementById('skfKurtosis');
@@ -1880,7 +2178,10 @@
         }
         if (analise.rms_mm_s) document.getElementById('skfVelocity').innerHTML = analise.rms_mm_s.toFixed(2);
         if (analise.frequencia_dominante_x) document.getElementById('skfFreq').innerHTML = analise.frequencia_dominante_x.toFixed(1);
+<<<<<<< HEAD
         
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         let severidadeTexto = analise.severidade || 'Normal';
         const severidadeEl = document.getElementById('skfSeveridade');
         severidadeEl.innerHTML = severidadeTexto;
@@ -1888,12 +2189,16 @@
         else if (severidadeTexto === 'Alerta') severidadeEl.style.color = '#f39c12';
         else if (severidadeTexto === 'Atencao') severidadeEl.style.color = '#3498db';
         else severidadeEl.style.color = '#2ecc71';
+<<<<<<< HEAD
         
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         let diagnosticoHtml = '';
         if (analise.recomendacao) diagnosticoHtml += `<strong>📋 Recomendação:</strong> ${analise.recomendacao}<br>`;
         if (analise.condicao_rolamento) diagnosticoHtml += `<strong>🔄 Rolamento:</strong> ${analise.condicao_rolamento}<br>`;
         if (analise.condicao_mancal) diagnosticoHtml += `<strong>⚙️ Mancal:</strong> ${analise.condicao_mancal}<br>`;
         if (analise.nivel_alerta) diagnosticoHtml += `<strong>⚠️ Alerta:</strong> ${analise.nivel_alerta}<br>`;
+<<<<<<< HEAD
         
         if (analise.energia_alta_freq && analise.energia_alta_freq > 50) {
             diagnosticoHtml += `<strong>⚠️ Alta frequência elevada</strong> - Possível falha em rolamento<br>`;
@@ -1916,6 +2221,24 @@
         }
         
         document.getElementById('fftStatus').innerHTML = `✅ FFT gerada | Freq. Dominante: ${fftData.freq_max || '--'} Hz | Amp. Máx: ${fftData.amp_max ? fftData.amp_max.toFixed(3) : '--'} m/s²`;
+=======
+        if (analise.energia_alta_freq && analise.energia_alta_freq > 50) diagnosticoHtml += `<strong>⚠️ Alta frequência elevada</strong> - Possível falha em rolamento<br>`;
+        if (diagnosticoHtml === '') diagnosticoHtml = '✅ Equipamento em condição normal. Monitoramento contínuo.';
+        document.getElementById('skfDiagnostico').innerHTML = diagnosticoHtml;
+    }
+    
+    function atualizarGraficoFFT(fftData) {
+        if (!fftData || !fftData.fft_data || fftData.fft_data.length === 0) {
+            document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT...';
+            if (fftChart) { fftChart.data.datasets[0].data = []; fftChart.update(); }
+            return;
+        }
+        
+        const maxAmp = Math.max(...fftData.fft_data.map(p => p.amp));
+        const maxFreq = fftData.fft_data.find(p => p.amp === maxAmp)?.freq || 0;
+        
+        document.getElementById('fftStatus').innerHTML = `✅ FFT gerada | 🎵 Freq. Dominante: ${maxFreq.toFixed(1)} Hz | 📈 Amp. Máx: ${maxAmp.toFixed(4)} m/s² | 💡 Passe o mouse sobre a linha para ver valores em tempo real`;
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         
         const pontos = fftData.fft_data.map(p => ({ x: p.freq, y: p.amp }));
         
@@ -1953,9 +2276,14 @@
         verticalChart.update();
         axialChart.data.datasets[0].data = [];
         axialChart.update();
+<<<<<<< HEAD
         
         document.getElementById('tempValue').innerHTML = '-- °C';
         document.getElementById('rmsValue').innerHTML = '-- m/s²';
+=======
+        document.getElementById('tempValue').innerHTML = '-- °C';
+        document.getElementById('rmsValue').innerHTML = '-- mm/s';
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         document.getElementById('horizontalValue').innerHTML = '-- m/s²';
         document.getElementById('verticalValue').innerHTML = '-- m/s²';
         document.getElementById('axialValue').innerHTML = '-- m/s²';
@@ -1978,6 +2306,7 @@
         
         let url = `/api/dados/?motor_id=${motorSelecionado}`;
         
+<<<<<<< HEAD
         fetch(url)
             .then(response => response.json())
             .then(dados => {
@@ -2065,6 +2394,76 @@
             });
         
         // 🔥 Buscar análise avançada (FFT e métricas SKF)
+=======
+        fetch(url).then(response => response.json()).then(dados => {
+            const noDataDiv = document.getElementById('noDataMessage');
+            if (dados && dados.length > 0) {
+                dadosRecebidos = true;
+                noDataDiv.style.display = 'none';
+                const dadosOrdenados = [...dados].reverse();
+                const ultimo = dados[dados.length - 1];
+                document.getElementById('tempAtual').innerText = ultimo.temperatura.toFixed(1);
+                document.getElementById('rmsAtual').innerText = ultimo.rms.toFixed(2);
+                document.getElementById('horizAtual').innerText = ultimo.vibX.toFixed(2);
+                document.getElementById('vertAtual').innerText = ultimo.vibZ.toFixed(2);
+                document.getElementById('axialAtual').innerText = ultimo.vibY.toFixed(2);
+                document.getElementById('tempValue').innerHTML = `${ultimo.temperatura.toFixed(1)} °C`;
+                document.getElementById('rmsValue').innerHTML = `${ultimo.rms.toFixed(2)} mm/s`;
+                document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX.toFixed(2)} m/s²`;
+                document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ.toFixed(2)} m/s²`;
+                document.getElementById('axialValue').innerHTML = `${ultimo.vibY.toFixed(2)} m/s²`;
+                const alarmConfig = alarmConfigs[motorSelecionado] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
+                verificarEAlarm('cardRMS', ultimo.rms, alarmConfig.rms);
+                verificarEAlarm('cardX', ultimo.vibX, alarmConfig.x);
+                verificarEAlarm('cardY', ultimo.vibY, alarmConfig.y);
+                verificarEAlarm('cardZ', ultimo.vibZ, alarmConfig.z);
+                verificarEAlarm('cardTemp', ultimo.temperatura, alarmConfig.temp);
+                const lista = document.getElementById('historicoLista');
+                if (lista.children.length === 1 && lista.children[0].innerText.includes("Aguardando")) lista.innerHTML = '';
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="historico-tempo">${ultimo.data}</span><span>${ultimo.temperatura.toFixed(1)}°C | Vel ${ultimo.rms.toFixed(2)} mm/s</span>`;
+                lista.insertBefore(li, lista.firstChild);
+                if (lista.children.length > 10) lista.removeChild(lista.lastChild);
+                const pontosTemp = [], pontosRms = [], pontosHoriz = [], pontosVert = [], pontosAxial = [];
+                dadosOrdenados.forEach(item => {
+                    let timestamp = Date.now();
+                    if (item.data) {
+                        const [h, m, s] = item.data.split(':');
+                        const date = new Date();
+                        date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
+                        timestamp = date.getTime();
+                    }
+                    pontosTemp.push({ x: timestamp, y: item.temperatura });
+                    pontosRms.push({ x: timestamp, y: item.rms });
+                    pontosHoriz.push({ x: timestamp, y: item.vibX });
+                    pontosVert.push({ x: timestamp, y: item.vibZ });
+                    pontosAxial.push({ x: timestamp, y: item.vibY });
+                });
+                tempChart.data.datasets[0].data = pontosTemp; tempChart.update();
+                rmsChart.data.datasets[0].data = pontosRms; rmsChart.update();
+                horizontalChart.data.datasets[0].data = pontosHoriz; horizontalChart.update();
+                verticalChart.data.datasets[0].data = pontosVert; verticalChart.update();
+                axialChart.data.datasets[0].data = pontosAxial; axialChart.update();
+            } else {
+                noDataDiv.style.display = 'block';
+                noDataDiv.innerHTML = `⚠️ Nenhum dado encontrado para o motor ID ${motorSelecionado}. Aguardando leituras...`;
+                limparGraficos();
+                document.getElementById('tempAtual').innerText = '--';
+                document.getElementById('rmsAtual').innerText = '--';
+                document.getElementById('horizAtual').innerText = '--';
+                document.getElementById('vertAtual').innerText = '--';
+                document.getElementById('axialAtual').innerText = '--';
+                const lista = document.getElementById('historicoLista');
+                lista.innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
+            }
+        }).catch(error => {
+            console.error('Erro ao buscar dados:', error);
+            limparGraficos();
+            document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
+        });
+        
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         try {
             const response = await fetch(`/api/analise/${motorSelecionado}/`);
             if (response.ok) {
@@ -2079,6 +2478,7 @@
                     document.getElementById('skfDiagnostico').innerHTML = diagnosticoHtml;
                 }
             }
+<<<<<<< HEAD
         } catch (err) {
             console.log('Análise avançada não disponível ainda');
         }
@@ -2093,18 +2493,30 @@
         } catch (err) {
             console.log('FFT não disponível ainda');
         }
+=======
+        } catch (err) { console.log('Análise avançada não disponível ainda'); }
+        
+        try {
+            const response = await fetch(`/api/fft/${motorSelecionado}/`);
+            if (response.ok) { const fftData = await response.json(); atualizarGraficoFFT(fftData); }
+        } catch (err) { console.log('FFT não disponível ainda'); }
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
     }
     
     function initDashboard() {
         carregarMotores();
         carregarCustomCharts();
         criarGraficoFFT();
+<<<<<<< HEAD
         
+=======
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         const ctxTemp = document.getElementById('tempChart').getContext('2d');
         const ctxRms = document.getElementById('rmsChart').getContext('2d');
         const ctxHoriz = document.getElementById('horizontalChart').getContext('2d');
         const ctxVert = document.getElementById('verticalChart').getContext('2d');
         const ctxAxial = document.getElementById('axialChart').getContext('2d');
+<<<<<<< HEAD
         
         tempChart = criarGrafico(ctxTemp, 'Temperatura (°C)', '#e67e22');
         rmsChart = criarGrafico(ctxRms, 'RMS (m/s²)', '#9b59b6');
@@ -2131,6 +2543,26 @@
             carregarDadosAPI();
         });
         
+=======
+        tempChart = criarGrafico(ctxTemp, 'Temperatura (°C)', '#e67e22');
+        rmsChart = criarGrafico(ctxRms, 'Velocidade RMS (mm/s)', '#9b59b6');
+        horizontalChart = criarGrafico(ctxHoriz, 'Horizontal X (m/s²)', '#3498db');
+        verticalChart = criarGrafico(ctxVert, 'Vertical Z (m/s²)', '#f39c12');
+        axialChart = criarGrafico(ctxAxial, 'Axial Y (m/s²)', '#2ecc71');
+        carregarDadosAPI();
+        if (pollingInterval) clearInterval(pollingInterval);
+        pollingInterval = setInterval(() => {
+            carregarDadosAPI();
+            if (document.getElementById('customChartsContainer').style.display === 'block') carregarCustomChartsData();
+        }, 5000);
+        setupMenuAndActions();
+        document.getElementById('motorSelect').addEventListener('change', (e) => {
+            motorSelecionado = e.target.value ? parseInt(e.target.value) : null;
+            const motor = motores.find(m => m.id === motorSelecionado);
+            document.getElementById('motorInfo').innerHTML = motor ? `ID: ${motor.id} | ${motor.rpm} RPM | ${motor.cv} CV` : '';
+            carregarDadosAPI();
+        });
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d
         document.getElementById('addChartBtn').addEventListener('click', adicionarChart);
         document.getElementById('backToDashboardBtn').addEventListener('click', showDashboard);
         document.getElementById('saveEditBtn').addEventListener('click', salvarEditChart);
@@ -2160,6 +2592,7 @@
         const actions = [
             { id: 'menuDashboard', fn: showDashboard }, { id: 'menuDashboard2', fn: showDashboard },
             { id: 'menuCustomCharts', fn: showCustomCharts }, { id: 'menuCustomCharts2', fn: showCustomCharts },
+<<<<<<< HEAD
             { id: 'menuMotores', fn: () => document.getElementById('motoresModal').style.display = 'flex' },
             { id: 'menuMotores2', fn: () => document.getElementById('motoresModal').style.display = 'flex' },
             { id: 'menuConfig', fn: openAlarmModal }, { id: 'menuConfig2', fn: openAlarmModal },
@@ -2177,3 +2610,17 @@
 </script>
 </body>
 </html>
+=======
+            { id: 'menuMotores', fn: () => document.getElementById('motoresModal').style.display = 'flex' }, { id: 'menuMotores2', fn: () => document.getElementById('motoresModal').style.display = 'flex' },
+            { id: 'menuConfig', fn: openAlarmModal }, { id: 'menuConfig2', fn: openAlarmModal },
+            { id: 'menuExport', fn: () => showToast('📁 Dados exportados!') }, { id: 'menuExport2', fn: () => showToast('📁 Dados exportados!') },
+            { id: 'menuAjuda', fn: () => showToast('❓ Selecione motor e configure escala para cada gráfico!') }, { id: 'menuAjuda2', fn: () => showToast('❓ Selecione motor e configure escala para cada gráfico!') },
+            { id: 'menuSobre', fn: () => showToast('ℹ️ TP Dynamics IoT - Criado por Tales Benites Ponciani') }, { id: 'menuSobre2', fn: () => showToast('ℹ️ TP Dynamics IoT - Criado por Tales Benites Ponciani') },
+            { id: 'menuLogout', fn: fazerLogout }, { id: 'menuLogout2', fn: fazerLogout }
+        ];
+        actions.forEach(({ id, fn }) => { document.getElementById(id)?.addEventListener('click', (e) => { e.preventDefault(); fn(); document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show')); }); });
+    }
+</script>
+</body>
+</html>
+>>>>>>> e8468cdbaf4909d95f40e2fe1474d459b899d58d

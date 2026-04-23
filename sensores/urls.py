@@ -16,7 +16,7 @@ urlpatterns = [
     # APIs de calibração (OFFSETS)
     path('api/salvar_offset/', views.salvar_offset, name='salvar_offset'),
     path('api/carregar_offset/<int:motor_id>/', views.carregar_offset, name='carregar_offset'),
-    path('api/listar_offsets/', views.listar_offsets, name='listar_offsets'),  # Opcional - para debug
+    path('api/listar_offsets/', views.listar_offsets, name='listar_offsets'),
     
     # APIs de motores
     path('api/motores/', views.motores_listar, name='motores_listar'),
