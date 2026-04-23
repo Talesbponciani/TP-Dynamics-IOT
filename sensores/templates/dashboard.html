@@ -1866,21 +1866,43 @@
         });
     }
     
-    // 🔥 NOVO: Atualizar métricas SKF
+    // 🔥 CORRIGIDO: Atualizar métricas SKF com verificações de segurança
     function atualizarMetricasSKF(analise) {
         if (!analise) return;
         
-        if (analise.crest_factor) document.getElementById('skfCrest').innerHTML = analise.crest_factor.toFixed(2);
-        if (analise.kurtosis) {
+        // Crest Factor
+        if (analise.crest_factor !== undefined && analise.crest_factor !== null) {
+            document.getElementById('skfCrest').innerHTML = analise.crest_factor.toFixed(2);
+        } else {
+            document.getElementById('skfCrest').innerHTML = '--';
+        }
+        
+        // Kurtosis
+        if (analise.kurtosis !== undefined && analise.kurtosis !== null) {
             const kurtosisEl = document.getElementById('skfKurtosis');
             kurtosisEl.innerHTML = analise.kurtosis.toFixed(2);
             if (analise.kurtosis > 3) kurtosisEl.style.color = '#e74c3c';
             else if (analise.kurtosis > 2) kurtosisEl.style.color = '#f39c12';
             else kurtosisEl.style.color = '#2ecc71';
+        } else {
+            document.getElementById('skfKurtosis').innerHTML = '--';
         }
-        if (analise.rms_mm_s) document.getElementById('skfVelocity').innerHTML = analise.rms_mm_s.toFixed(2);
-        if (analise.frequencia_dominante_x) document.getElementById('skfFreq').innerHTML = analise.frequencia_dominante_x.toFixed(1);
         
+        // Velocity
+        if (analise.rms_mm_s !== undefined && analise.rms_mm_s !== null) {
+            document.getElementById('skfVelocity').innerHTML = analise.rms_mm_s.toFixed(2);
+        } else {
+            document.getElementById('skfVelocity').innerHTML = '--';
+        }
+        
+        // Frequência Dominante
+        if (analise.frequencia_dominante_x !== undefined && analise.frequencia_dominante_x !== null) {
+            document.getElementById('skfFreq').innerHTML = analise.frequencia_dominante_x.toFixed(1);
+        } else {
+            document.getElementById('skfFreq').innerHTML = '--';
+        }
+        
+        // Severidade
         let severidadeTexto = analise.severidade || 'Normal';
         const severidadeEl = document.getElementById('skfSeveridade');
         severidadeEl.innerHTML = severidadeTexto;
@@ -1904,9 +1926,10 @@
         document.getElementById('skfDiagnostico').innerHTML = diagnosticoHtml;
     }
     
-    // 🔥 NOVO: Atualizar gráfico FFT
+    // 🔥 CORRIGIDO: Atualizar gráfico FFT com verificações de segurança
     function atualizarGraficoFFT(fftData) {
-        if (!fftData || !fftData.fft_data || fftData.fft_data.length === 0) {
+        // Verificação de segurança completa
+        if (!fftData || !fftData.fft_data || !Array.isArray(fftData.fft_data) || fftData.fft_data.length === 0) {
             document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT (256 amostras)...';
             if (fftChart) {
                 fftChart.data.datasets[0].data = [];
@@ -1915,7 +1938,11 @@
             return;
         }
         
-        document.getElementById('fftStatus').innerHTML = `✅ FFT gerada | Freq. Dominante: ${fftData.freq_max || '--'} Hz | Amp. Máx: ${fftData.amp_max ? fftData.amp_max.toFixed(3) : '--'} m/s²`;
+        // Verificação de segurança para .toFixed()
+        const freqMax = (fftData.freq_max !== undefined && fftData.freq_max !== null) ? fftData.freq_max.toFixed(1) : '--';
+        const ampMax = (fftData.amp_max !== undefined && fftData.amp_max !== null) ? fftData.amp_max.toFixed(3) : '--';
+        
+        document.getElementById('fftStatus').innerHTML = `✅ FFT gerada | Freq. Dominante: ${freqMax} Hz | Amp. Máx: ${ampMax} m/s²`;
         
         const pontos = fftData.fft_data.map(p => ({ x: p.freq, y: p.amp }));
         
@@ -1943,16 +1970,26 @@
     }
     
     function limparGraficos() {
-        tempChart.data.datasets[0].data = [];
-        tempChart.update();
-        rmsChart.data.datasets[0].data = [];
-        rmsChart.update();
-        horizontalChart.data.datasets[0].data = [];
-        horizontalChart.update();
-        verticalChart.data.datasets[0].data = [];
-        verticalChart.update();
-        axialChart.data.datasets[0].data = [];
-        axialChart.update();
+        if (tempChart) {
+            tempChart.data.datasets[0].data = [];
+            tempChart.update();
+        }
+        if (rmsChart) {
+            rmsChart.data.datasets[0].data = [];
+            rmsChart.update();
+        }
+        if (horizontalChart) {
+            horizontalChart.data.datasets[0].data = [];
+            horizontalChart.update();
+        }
+        if (verticalChart) {
+            verticalChart.data.datasets[0].data = [];
+            verticalChart.update();
+        }
+        if (axialChart) {
+            axialChart.data.datasets[0].data = [];
+            axialChart.update();
+        }
         
         document.getElementById('tempValue').innerHTML = '-- °C';
         document.getElementById('rmsValue').innerHTML = '-- m/s²';
@@ -1990,29 +2027,29 @@
                     const dadosOrdenados = [...dados].reverse();
                     const ultimo = dados[dados.length - 1];
                     
-                    document.getElementById('tempAtual').innerText = ultimo.temperatura.toFixed(1);
-                    document.getElementById('rmsAtual').innerText = ultimo.rms.toFixed(2);
-                    document.getElementById('horizAtual').innerText = ultimo.vibX.toFixed(2);
-                    document.getElementById('vertAtual').innerText = ultimo.vibZ.toFixed(2);
-                    document.getElementById('axialAtual').innerText = ultimo.vibY.toFixed(2);
+                    document.getElementById('tempAtual').innerText = ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--';
+                    document.getElementById('rmsAtual').innerText = ultimo.rms ? ultimo.rms.toFixed(2) : '--';
+                    document.getElementById('horizAtual').innerText = ultimo.vibX ? ultimo.vibX.toFixed(2) : '--';
+                    document.getElementById('vertAtual').innerText = ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--';
+                    document.getElementById('axialAtual').innerText = ultimo.vibY ? ultimo.vibY.toFixed(2) : '--';
                     
-                    document.getElementById('tempValue').innerHTML = `${ultimo.temperatura.toFixed(1)} °C`;
-                    document.getElementById('rmsValue').innerHTML = `${ultimo.rms.toFixed(2)} m/s²`;
-                    document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX.toFixed(2)} m/s²`;
-                    document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ.toFixed(2)} m/s²`;
-                    document.getElementById('axialValue').innerHTML = `${ultimo.vibY.toFixed(2)} m/s²`;
+                    document.getElementById('tempValue').innerHTML = `${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'} °C`;
+                    document.getElementById('rmsValue').innerHTML = `${ultimo.rms ? ultimo.rms.toFixed(2) : '--'} m/s²`;
+                    document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX ? ultimo.vibX.toFixed(2) : '--'} m/s²`;
+                    document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--'} m/s²`;
+                    document.getElementById('axialValue').innerHTML = `${ultimo.vibY ? ultimo.vibY.toFixed(2) : '--'} m/s²`;
                     
                     const alarmConfig = alarmConfigs[motorSelecionado] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
-                    verificarEAlarm('cardRMS', ultimo.rms, alarmConfig.rms);
-                    verificarEAlarm('cardX', ultimo.vibX, alarmConfig.x);
-                    verificarEAlarm('cardY', ultimo.vibY, alarmConfig.y);
-                    verificarEAlarm('cardZ', ultimo.vibZ, alarmConfig.z);
-                    verificarEAlarm('cardTemp', ultimo.temperatura, alarmConfig.temp);
+                    verificarEAlarm('cardRMS', ultimo.rms || 0, alarmConfig.rms);
+                    verificarEAlarm('cardX', ultimo.vibX || 0, alarmConfig.x);
+                    verificarEAlarm('cardY', ultimo.vibY || 0, alarmConfig.y);
+                    verificarEAlarm('cardZ', ultimo.vibZ || 0, alarmConfig.z);
+                    verificarEAlarm('cardTemp', ultimo.temperatura || 0, alarmConfig.temp);
                     
                     const lista = document.getElementById('historicoLista');
                     if (lista.children.length === 1 && lista.children[0].innerText.includes("Aguardando")) lista.innerHTML = '';
                     const li = document.createElement('li');
-                    li.innerHTML = `<span class="historico-tempo">${ultimo.data}</span><span>${ultimo.temperatura.toFixed(1)}°C | RMS ${ultimo.rms.toFixed(2)}</span>`;
+                    li.innerHTML = `<span class="historico-tempo">${ultimo.data || '--'}</span><span>${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'}°C | RMS ${ultimo.rms ? ultimo.rms.toFixed(2) : '--'}</span>`;
                     lista.insertBefore(li, lista.firstChild);
                     if (lista.children.length > 10) lista.removeChild(lista.lastChild);
                     
@@ -2026,23 +2063,33 @@
                             date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
                             timestamp = date.getTime();
                         }
-                        pontosTemp.push({ x: timestamp, y: item.temperatura });
-                        pontosRms.push({ x: timestamp, y: item.rms });
-                        pontosHoriz.push({ x: timestamp, y: item.vibX });
-                        pontosVert.push({ x: timestamp, y: item.vibZ });
-                        pontosAxial.push({ x: timestamp, y: item.vibY });
+                        pontosTemp.push({ x: timestamp, y: item.temperatura || 0 });
+                        pontosRms.push({ x: timestamp, y: item.rms || 0 });
+                        pontosHoriz.push({ x: timestamp, y: item.vibX || 0 });
+                        pontosVert.push({ x: timestamp, y: item.vibZ || 0 });
+                        pontosAxial.push({ x: timestamp, y: item.vibY || 0 });
                     });
                     
-                    tempChart.data.datasets[0].data = pontosTemp;
-                    tempChart.update();
-                    rmsChart.data.datasets[0].data = pontosRms;
-                    rmsChart.update();
-                    horizontalChart.data.datasets[0].data = pontosHoriz;
-                    horizontalChart.update();
-                    verticalChart.data.datasets[0].data = pontosVert;
-                    verticalChart.update();
-                    axialChart.data.datasets[0].data = pontosAxial;
-                    axialChart.update();
+                    if (tempChart) {
+                        tempChart.data.datasets[0].data = pontosTemp;
+                        tempChart.update();
+                    }
+                    if (rmsChart) {
+                        rmsChart.data.datasets[0].data = pontosRms;
+                        rmsChart.update();
+                    }
+                    if (horizontalChart) {
+                        horizontalChart.data.datasets[0].data = pontosHoriz;
+                        horizontalChart.update();
+                    }
+                    if (verticalChart) {
+                        verticalChart.data.datasets[0].data = pontosVert;
+                        verticalChart.update();
+                    }
+                    if (axialChart) {
+                        axialChart.data.datasets[0].data = pontosAxial;
+                        axialChart.update();
+                    }
                     
                 } else {
                     noDataDiv.style.display = 'block';
@@ -2064,7 +2111,7 @@
                 document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
             });
         
-        // 🔥 Buscar análise avançada (FFT e métricas SKF)
+        // 🔥 Buscar análise avançada (FFT e métricas SKF) com tratamento de erro
         try {
             const response = await fetch(`/api/analise/${motorSelecionado}/`);
             if (response.ok) {
@@ -2080,18 +2127,35 @@
                 }
             }
         } catch (err) {
-            console.log('Análise avançada não disponível ainda');
+            console.log('Análise avançada não disponível ainda:', err);
         }
         
-        // 🔥 Buscar dados FFT
+        // 🔥 Buscar dados FFT com tratamento de erro completo
         try {
             const response = await fetch(`/api/fft/${motorSelecionado}/`);
-            if (response.ok) {
-                const fftData = await response.json();
+            
+            // Verificar se a resposta é OK antes de processar
+            if (!response.ok) {
+                console.warn(`FFT não disponível: ${response.status} - ${response.statusText}`);
+                document.getElementById('fftStatus').innerHTML = `⏳ FFT indisponível (HTTP ${response.status}) - Aguardando amostras...`;
+                return;
+            }
+            
+            const fftData = await response.json();
+            
+            // Verificar se os dados existem e têm a estrutura esperada
+            if (fftData && fftData.fft_data && Array.isArray(fftData.fft_data) && fftData.fft_data.length > 0) {
                 atualizarGraficoFFT(fftData);
+            } else {
+                document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT (256 amostras)...';
+                if (fftChart) {
+                    fftChart.data.datasets[0].data = [];
+                    fftChart.update();
+                }
             }
         } catch (err) {
-            console.log('FFT não disponível ainda');
+            console.error('Erro ao buscar FFT:', err);
+            document.getElementById('fftStatus').innerHTML = '❌ Erro ao carregar FFT';
         }
     }
     
