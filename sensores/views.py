@@ -14,7 +14,7 @@ from .models import Leitura, Motor
 
 # ========== BUFFERS ==========
 buffers = {}
-BUFFER_SIZE = 50  # REDUZIDO para 50 amostras (começa a funcionar mais rápido)
+BUFFER_SIZE = 64
 
 # Buffer para velocidade
 vel_buffers = {}
@@ -129,7 +129,7 @@ def receber_dados(request):
 
 
 # =========================
-# RECEBER DADOS BRUTOS (CÁLCULO VELOCIDADE)
+# RECEBER DADOS BRUTOS - CÓDIGO CORRIGIDO
 # =========================
 @csrf_exempt
 def receber_dados_brutos(request):
@@ -159,18 +159,20 @@ def receber_dados_brutos(request):
         buffers[motor_id]['z'].append(vibZ)
         buffers[motor_id]['tempo'].append(datetime.now().timestamp())
         
-        # Cálculos básicos
-        rms_total = math.sqrt((vibX**2 + vibY**2 + vibZ**2) / 3)
+        # ✅ CORREÇÃO: RMS de ACELERAÇÃO (m/s²) - É o que vai para o gráfico
+        rms_aceleracao = math.sqrt((vibX**2 + vibY**2 + vibZ**2) / 3)
+        
+        # Cálculos básicos (usando aceleração)
         pico = max(abs(vibX), abs(vibY), abs(vibZ))
-        crest_factor = pico / rms_total if rms_total > 0 else 0
+        crest_factor = pico / rms_aceleracao if rms_aceleracao > 0 else 0
         
         amostras = [vibX, vibY, vibZ]
         kurtosis = stats.kurtosis(amostras, fisher=True) if np.std(amostras) > 0 else 0
         
-        # Velocidade em mm/s (corrigida)
-        vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000
+        # Velocidade em mm/s (apenas para diagnóstico, NÃO salva como RMS)
+        vel_rms = rms_aceleracao * 9.81 / (2 * math.pi * 60) * 1000
         
-        # Severidade baseada na VELOCIDADE
+        # Severidade baseada na VELOCIDADE (ISO 10816)
         if vel_rms < 1.0:
             severidade = "Boa"
             recomendacao = "Operacao normal"
@@ -186,14 +188,14 @@ def receber_dados_brutos(request):
         
         alerta = vel_rms > 4.5
         
-        # Criar leitura (rms agora armazena VELOCIDADE)
+        # ✅ CORREÇÃO: Salva ACELERAÇÃO (m/s²) no campo rms, NÃO velocidade
         leitura = Leitura.objects.create(
             motor=motor,
             temperatura=round(temperatura, 1),
             vibX=round(vibX, 3),
             vibY=round(vibY, 3),
             vibZ=round(vibZ, 3),
-            rms=round(vel_rms, 3),
+            rms=round(rms_aceleracao, 3),  # ← AGORA É ACELERAÇÃO (m/s²)
             crest=round(crest_factor, 2)
         )
         
@@ -201,7 +203,7 @@ def receber_dados_brutos(request):
             'status': 'ok',
             'id': leitura.id,
             'calculos': {
-                'aceleracao_rms': round(rms_total, 3),
+                'aceleracao_rms': round(rms_aceleracao, 3),
                 'velocidade_mm_s': round(vel_rms, 2),
                 'crest_factor': round(crest_factor, 2),
                 'kurtosis': round(kurtosis, 3),
@@ -230,7 +232,7 @@ def dados_json(request):
             "data": d.data.strftime("%H:%M:%S") if d.data else "",
             "motor_id": d.motor.id if d.motor else None,
             "temperatura": float(d.temperatura or 0),
-            "velocidade_mm_s": float(d.rms or 0),
+            "rms": float(d.rms or 0),  # ← AGORA É ACELERAÇÃO (m/s²)
             "vibX": float(d.vibX or 0),
             "vibY": float(d.vibY or 0),
             "vibZ": float(d.vibZ or 0)
@@ -266,7 +268,7 @@ def get_analise_completa(request, motor_id):
         x_windowed = x_data * window
         
         # Calcular FFT
-        fs = 10  # Taxa de amostragem (Hz) - ajuste conforme seu ESP32
+        fs = 10  # Taxa de amostragem (Hz)
         freq = fftfreq(BUFFER_SIZE, 1/fs)[:BUFFER_SIZE//2]
         fft_x = np.abs(fft(x_windowed))[:BUFFER_SIZE//2]
         
@@ -276,7 +278,7 @@ def get_analise_completa(request, motor_id):
         crest_factor = pico / rms_total if rms_total > 0 else 0
         kurtosis_val = stats.kurtosis(x_data, fisher=True)
         
-        # Velocidade em mm/s
+        # Velocidade em mm/s (para diagnóstico)
         vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000
         
         # Frequência dominante (pular a primeira frequência que é 0)
@@ -383,7 +385,7 @@ def get_fft_data(request, motor_id):
         window = np.hanning(len(x_data))
         x_windowed = x_data * window
         
-        fs = 10  # Taxa de amostragem (Hz) - ajuste conforme seu ESP32
+        fs = 10  # Taxa de amostragem (Hz)
         freq = fftfreq(BUFFER_SIZE, 1/fs)[:BUFFER_SIZE//2]
         fft_x = np.abs(fft(x_windowed))[:BUFFER_SIZE//2]
         
