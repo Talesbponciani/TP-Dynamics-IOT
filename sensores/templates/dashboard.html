@@ -150,7 +150,7 @@
             pointer-events: none;
         }
         
-        .dashboard-container, .custom-charts-container {
+        .dashboard-container, .custom-charts-container, .historico-container {
             display: none;
             position: relative;
             z-index: 1;
@@ -297,7 +297,7 @@
         .status-alerta { color: #f1c40f; }
         .status-critico { color: #e74c3c; }
         
-        /* Cards com tamanho único - largura e altura fixas */
+        /* Cards com tamanho único */
         .card {
             background: rgba(30,30,30,0.75);
             backdrop-filter: blur(8px);
@@ -376,7 +376,6 @@
         canvas { width: 100% !important; height: auto !important; max-height: 200px; }
         h3 { margin: 0 0 10px 0; font-size: 0.9rem; color: #eee; }
         
-        /* 🔥 NOVOS ESTILOS PARA MÉTRICAS SKF E FFT */
         .skf-metrics-panel {
             background: rgba(20,20,20,0.7);
             backdrop-filter: blur(8px);
@@ -428,11 +427,11 @@
             margin-bottom: 20px;
         }
         
-        .custom-charts-container {
+        .custom-charts-container, .historico-container {
             padding: 20px;
             padding-bottom: 50px;
         }
-        .custom-charts-header {
+        .custom-charts-header, .historico-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -440,7 +439,7 @@
             margin-bottom: 25px;
             gap: 15px;
         }
-        .add-chart-panel {
+        .add-chart-panel, .historico-panel-filters {
             background: rgba(20,20,20,0.7);
             backdrop-filter: blur(8px);
             border-radius: 20px;
@@ -452,13 +451,14 @@
             gap: 15px;
             border: 1px solid rgba(255,255,200,0.2);
         }
-        .add-chart-panel label {
+        .add-chart-panel label, .historico-panel-filters label {
             font-size: 0.75rem;
             color: #ccc;
             display: block;
             margin-bottom: 5px;
         }
-        .add-chart-panel select, .add-chart-panel input {
+        .add-chart-panel select, .add-chart-panel input,
+        .historico-panel-filters select, .historico-panel-filters input {
             background: rgba(0,0,0,0.6);
             border: 1px solid rgba(255,255,200,0.3);
             border-radius: 12px;
@@ -466,13 +466,10 @@
             color: white;
             font-size: 0.85rem;
         }
-        .add-chart-panel select {
+        .add-chart-panel select, .historico-panel-filters select {
             min-width: 140px;
         }
-        .add-chart-panel input {
-            min-width: 160px;
-        }
-        .btn-add {
+        .btn-add, .btn-carregar-historico {
             background: #2ecc71;
             border: none;
             border-radius: 12px;
@@ -482,7 +479,7 @@
             font-weight: bold;
             transition: 0.2s;
         }
-        .btn-add:hover {
+        .btn-add:hover, .btn-carregar-historico:hover {
             background: #27ae60;
             transform: scale(1.02);
         }
@@ -503,7 +500,7 @@
             grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
             gap: 20px;
         }
-        .custom-chart-card {
+        .custom-chart-card, .historico-card {
             background: rgba(20,20,20,0.7);
             backdrop-filter: blur(8px);
             border-radius: 20px;
@@ -512,7 +509,7 @@
             position: relative;
             transition: 0.2s;
         }
-        .custom-chart-card:hover {
+        .custom-chart-card:hover, .historico-card:hover {
             border-color: rgba(255,255,200,0.4);
         }
         .chart-header {
@@ -545,10 +542,6 @@
             color: white;
             font-size: 0.7rem;
         }
-        .chart-config label {
-            color: #ccc;
-            font-size: 0.7rem;
-        }
         .chart-controls {
             display: flex;
             gap: 8px;
@@ -569,56 +562,46 @@
             background: #e74c3c;
             color: white;
         }
-        .btn-edit-chart {
-            color: #f39c12;
-        }
-        .btn-edit-chart:hover {
-            background: #f39c12;
-            color: white;
-        }
         .custom-canvas {
             width: 100% !important;
-            max-height: 250px !important;
+            max-height: 300px !important;
         }
-        .empty-charts {
+        .empty-charts, .empty-historico {
             text-align: center;
             padding: 60px 20px;
             background: rgba(20,20,20,0.5);
             border-radius: 20px;
             color: #aaa;
         }
-        .motor-filter {
-            background: rgba(0,0,0,0.4);
-            padding: 10px 15px;
-            border-radius: 16px;
+        .stats-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
             display: flex;
-            align-items: center;
-            gap: 15px;
+            justify-content: space-around;
             flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.7rem;
         }
-        .motor-filter label {
-            font-size: 0.85rem;
-            color: #ccc;
+        .stat-item {
+            text-align: center;
         }
-        .motor-filter select {
-            background: rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,200,0.3);
-            border-radius: 20px;
-            padding: 6px 12px;
-            color: white;
+        .stat-label {
+            color: #aaa;
         }
-        .motor-selector select {
+        .stat-value {
+            font-weight: bold;
+            color: #f39c12;
+        }
+        
+        .motor-selector select, .motor-filter select {
             background: rgba(0,0,0,0.8);
             border: 1px solid rgba(255,255,200,0.3);
             padding: 8px 12px;
             border-radius: 40px;
             color: #ffffff;
             cursor: pointer;
-            appearance: none;
-        }
-        .motor-selector select option {
-            background: #2c3e50;
-            color: #ffffff;
         }
         .motor-info {
             font-size: 0.7rem;
@@ -724,87 +707,6 @@
             background: #e74c3c;
             color: white;
         }
-        .next-id-info {
-            background: rgba(46, 204, 113, 0.2);
-            color: #2ecc71;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            display: inline-block;
-        }
-        .alarm-motor-selector {
-            background: rgba(0,0,0,0.3);
-            padding: 10px;
-            border-radius: 16px;
-            margin-bottom: 15px;
-        }
-        .search-box {
-            position: relative;
-            margin-bottom: 10px;
-        }
-        .search-box input {
-            width: 100%;
-            padding: 8px 35px 8px 12px;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,200,0.3);
-            border-radius: 25px;
-            color: white;
-            font-size: 0.85rem;
-        }
-        .search-icon {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255,255,255,0.5);
-            font-size: 0.8rem;
-        }
-        .motor-list {
-            max-height: 180px;
-            overflow-y: auto;
-            border: 1px solid rgba(255,255,200,0.2);
-            border-radius: 12px;
-            background: rgba(0,0,0,0.3);
-        }
-        .motor-item {
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid rgba(255,255,200,0.1);
-            transition: all 0.2s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.8rem;
-        }
-        .motor-item:hover {
-            background: rgba(52, 152, 219, 0.3);
-        }
-        .motor-item.selected {
-            background: rgba(46, 204, 113, 0.3);
-            border-left: 3px solid #2ecc71;
-        }
-        .selected-motor-display {
-            background: rgba(52, 152, 219, 0.3);
-            border: 1px solid rgba(52, 152, 219, 0.5);
-            border-radius: 12px;
-            padding: 8px 12px;
-            margin-top: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-        .alarm-config-section {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid rgba(255,255,200,0.2);
-        }
-        .scale-config {
-            display: flex;
-            gap: 10px;
-            margin-top: 5px;
-        }
-        .scale-config input {
-            width: 80px;
-        }
         
         .footer-credit {
             position: fixed;
@@ -822,16 +724,6 @@
             pointer-events: none;
         }
         
-        .modal-footer-credit {
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,200,0.2);
-            font-size: 0.7rem;
-            color: #aaa;
-            font-family: monospace;
-        }
-        
         @media (max-width: 800px) {
             .top-panel { flex-direction: column; }
             .header { flex-direction: column; align-items: stretch; gap: 10px; }
@@ -840,8 +732,6 @@
             .charts-grid { grid-template-columns: 1fr; }
             .chart-config { flex-direction: column; align-items: flex-start; }
             .footer-credit { font-size: 0.65rem; padding: 4px 10px; }
-            .current-value { font-size: 0.65rem; top: 5px; right: 10px; }
-            .skf-metrics-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -877,7 +767,8 @@
                 <button class="menu-btn" id="menuBtn">☰ Menu</button>
                 <div class="dropdown-content" id="menuDropdown">
                     <a href="#" id="menuDashboard">📊 Dashboard Principal</a>
-                    <a href="#" id="menuCustomCharts">📈 Painel de Gráficos Personalizáveis</a>
+                    <a href="#" id="menuCustomCharts">📈 Gráficos Personalizáveis</a>
+                    <a href="#" id="menuHistorico">📅 Histórico Diário</a>
                     <a href="#" id="menuMotores">📋 Gerenciar Motores</a>
                     <a href="#" id="menuConfig">⚙️ Configurações de Alarmes</a>
                     <a href="#" id="menuExport">📁 Exportar Dados</a>
@@ -905,7 +796,6 @@
         </div>
     </div>
 
-    <!-- 🔥 NOVO: Painel de Métricas SKF -->
     <div class="skf-metrics-panel">
         <h3 style="margin:0 0 10px 0;">🔬 Análise Avançada - Estilo SKF</h3>
         <div class="skf-metrics-grid">
@@ -972,7 +862,6 @@
         </div>
     </div>
 
-    <!-- 🔥 GRÁFICO FFT EM LINHA -->
     <div class="chart-container fft-container">
         <h3>🎵 Espectro de Frequências (FFT) - Análise de Vibração</h3>
         <canvas id="fftChart" style="max-height: 250px;"></canvas>
@@ -988,7 +877,8 @@
             <button class="menu-btn" id="menuBtn2">☰ Menu</button>
             <div class="dropdown-content" id="menuDropdown2">
                 <a href="#" id="menuDashboard2">📊 Dashboard Principal</a>
-                <a href="#" id="menuCustomCharts2">📈 Painel de Gráficos Personalizáveis</a>
+                <a href="#" id="menuCustomCharts2">📈 Gráficos Personalizáveis</a>
+                <a href="#" id="menuHistorico2">📅 Histórico Diário</a>
                 <a href="#" id="menuMotores2">📋 Gerenciar Motores</a>
                 <a href="#" id="menuConfig2">⚙️ Configurações de Alarmes</a>
                 <a href="#" id="menuExport2">📁 Exportar Dados</a>
@@ -1053,8 +943,86 @@
     </div>
 </div>
 
-<!-- Modal de Configuração de Alarmes -->
+<!-- Página de Histórico Diário (NOVA) -->
+<div id="historicoContainer" class="historico-container">
+    <div class="historico-header">
+        <h1>📅 Histórico Diário de Leituras</h1>
+        <div class="dropdown">
+            <button class="menu-btn" id="menuBtn3">☰ Menu</button>
+            <div class="dropdown-content" id="menuDropdown3">
+                <a href="#" id="menuDashboard3">📊 Dashboard Principal</a>
+                <a href="#" id="menuCustomCharts3">📈 Gráficos Personalizáveis</a>
+                <a href="#" id="menuHistorico3">📅 Histórico Diário</a>
+                <a href="#" id="menuMotores3">📋 Gerenciar Motores</a>
+                <a href="#" id="menuConfig3">⚙️ Configurações de Alarmes</a>
+                <a href="#" id="menuExport3">📁 Exportar Dados</a>
+                <a href="#" id="menuAjuda3">❓ Ajuda</a>
+                <a href="#" id="menuSobre3">ℹ️ Sobre</a>
+                <a href="#" id="menuLogout3" style="border-top: 1px solid rgba(255,255,200,0.2); color:#e74c3c;">🚪 Sair</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="historico-panel-filters">
+        <div>
+            <label>🎯 Selecione o Motor</label>
+            <select id="historicoMotorSelect">
+                <option value="">Selecione um motor...</option>
+            </select>
+        </div>
+        <div>
+            <label>📅 Selecione a Data</label>
+            <input type="date" id="historicoDataSelect">
+        </div>
+        <div>
+            <label>📊 Tipo de Gráfico</label>
+            <select id="historicoTipoGrafico">
+                <option value="line">📈 Linha</option>
+                <option value="bar">📊 Barras</option>
+                <option value="radar">🕸️ Radar</option>
+                <option value="scatter">✨ Dispersão</option>
+            </select>
+        </div>
+        <div>
+            <label>📏 Variável</label>
+            <select id="historicoVariavel">
+                <option value="temperatura">🌡️ Temperatura</option>
+                <option value="rms">📊 RMS Total</option>
+                <option value="vibX">🔵 Horizontal (X)</option>
+                <option value="vibY">🟢 Axial (Y)</option>
+                <option value="vibZ">🟠 Vertical (Z)</option>
+            </select>
+        </div>
+        <div>
+            <button class="btn-carregar-historico" id="btnCarregarHistorico">🔍 Carregar Histórico</button>
+            <button class="btn-back" id="backFromHistoricoBtn">← Voltar</button>
+        </div>
+    </div>
+
+    <div id="historicoCard" class="historico-card" style="display: none;">
+        <div class="chart-header">
+            <span class="chart-title" id="historicoChartTitle">Histórico do Dia</span>
+        </div>
+        <canvas id="historicoChart" style="width:100%; max-height: 350px;"></canvas>
+        <div id="historicoStats" class="stats-info"></div>
+        <div id="historicoTable" style="margin-top: 20px; overflow-x: auto; max-height: 300px;">
+            <table style="width: 100%; border-collapse: collapse; color: #ddd; font-size: 0.7rem;">
+                <thead style="background: rgba(0,0,0,0.5);">
+                    <tr><th>Horário</th><th>Valor</th><th>Unidade</th></tr>
+                </thead>
+                <tbody id="historicoTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div id="emptyHistorico" class="empty-historico">
+        📅 Selecione um motor, uma data e clique em "Carregar Histórico"<br>
+        para visualizar as leituras do dia selecionado.
+    </div>
+</div>
+
+<!-- Modais existentes (configurações, motores, etc) -->
 <div id="configModal" class="modal">
+    <!-- ... conteúdo existente ... -->
     <div class="modal-content">
         <h2>⚙️ Configurar Alarmes</h2>
         <div class="alarm-motor-selector">
@@ -1086,7 +1054,6 @@
     </div>
 </div>
 
-<!-- Modal de Gerenciar Motores -->
 <div id="motoresModal" class="modal">
     <div class="modal-content" style="max-width: 700px;">
         <h2>📋 Gerenciar Motores</h2>
@@ -1109,7 +1076,6 @@
     </div>
 </div>
 
-<!-- Modal de Formulário de Motor -->
 <div id="motorFormModal" class="modal">
     <div class="modal-content">
         <h2 id="formTitle">➕ Adicionar Motor</h2>
@@ -1132,7 +1098,6 @@
     </div>
 </div>
 
-<!-- Modal de Edição de Gráfico Personalizado -->
 <div id="editChartModal" class="modal">
     <div class="modal-content">
         <h2>✏️ Editar Gráfico</h2>
@@ -1171,12 +1136,227 @@
 </div>
 
 <div id="toastMsg" class="toast"></div>
-
-<!-- Rodapé fixo com créditos para todas as páginas -->
 <div class="footer-credit">✍️ Criado por Tales Benites Ponciani</div>
 
 <script>
-    // ==================== SEGURANÇA DE LOGIN ====================
+    // ==================== FUNÇÕES DE HISTÓRICO DIÁRIO ====================
+    let historicoChart = null;
+    
+    function showHistorico() {
+        document.getElementById('dashboardContainer').style.display = 'none';
+        document.getElementById('customChartsContainer').style.display = 'none';
+        document.getElementById('historicoContainer').style.display = 'block';
+        
+        // Atualiza selects de motor
+        const historicoSelect = document.getElementById('historicoMotorSelect');
+        historicoSelect.innerHTML = '<option value="">Selecione um motor...</option>';
+        motores.forEach(motor => {
+            const option = document.createElement('option');
+            option.value = motor.id;
+            option.textContent = `[ID ${motor.id}] ${motor.nome} - ${motor.marca}`;
+            historicoSelect.appendChild(option);
+        });
+        
+        // Seta data padrão para hoje
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('historicoDataSelect').value = today;
+        
+        // Esconde o card até carregar
+        document.getElementById('historicoCard').style.display = 'none';
+        document.getElementById('emptyHistorico').style.display = 'block';
+    }
+    
+    async function carregarHistoricoDiario() {
+        const motorId = document.getElementById('historicoMotorSelect').value;
+        const dataSelecionada = document.getElementById('historicoDataSelect').value;
+        const tipoGrafico = document.getElementById('historicoTipoGrafico').value;
+        const variavel = document.getElementById('historicoVariavel').value;
+        
+        if (!motorId) {
+            showToast('❌ Selecione um motor!', 2000);
+            return;
+        }
+        
+        if (!dataSelecionada) {
+            showToast('❌ Selecione uma data!', 2000);
+            return;
+        }
+        
+        showToast('📅 Carregando histórico...', 1500);
+        
+        try {
+            const response = await fetch(`/api/dados/?motor_id=${motorId}`);
+            if (!response.ok) throw new Error('Erro ao buscar dados');
+            
+            const todosDados = await response.json();
+            
+            if (!todosDados || todosDados.length === 0) {
+                showToast('⚠️ Nenhum dado encontrado para este motor', 2000);
+                document.getElementById('historicoCard').style.display = 'none';
+                document.getElementById('emptyHistorico').style.display = 'block';
+                document.getElementById('emptyHistorico').innerHTML = '⚠️ Nenhum dado encontrado para este motor. Aguardando leituras do ESP32.';
+                return;
+            }
+            
+            // Filtrar por data
+            const dadosFiltrados = todosDados.filter(item => {
+                if (!item.data) return false;
+                // Formato esperado: "HH:MM:SS" - comparar com a data selecionada usando timestamp
+                const dataItem = new Date();
+                const [h, m, s] = item.data.split(':');
+                dataItem.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
+                dataItem.setFullYear(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+                
+                const dataItemStr = dataItem.toISOString().split('T')[0];
+                return dataItemStr === dataSelecionada;
+            });
+            
+            if (dadosFiltrados.length === 0) {
+                showToast(`⚠️ Nenhuma leitura encontrada para ${dataSelecionada}`, 2000);
+                document.getElementById('historicoCard').style.display = 'none';
+                document.getElementById('emptyHistorico').style.display = 'block';
+                document.getElementById('emptyHistorico').innerHTML = `📭 Nenhuma leitura registrada em ${dataSelecionada} para este motor.`;
+                return;
+            }
+            
+            // Ordenar por horário
+            dadosFiltrados.sort((a, b) => {
+                const timeA = a.data.split(':').map(Number);
+                const timeB = b.data.split(':').map(Number);
+                return (timeA[0]*3600 + timeA[1]*60 + timeA[2]) - (timeB[0]*3600 + timeB[1]*60 + timeB[2]);
+            });
+            
+            // Extrair valores
+            const labels = dadosFiltrados.map(item => item.data);
+            const valores = dadosFiltrados.map(item => {
+                switch(variavel) {
+                    case 'temperatura': return item.temperatura || 0;
+                    case 'rms': return item.rms || 0;
+                    case 'vibX': return item.vibX || 0;
+                    case 'vibY': return item.vibY || 0;
+                    case 'vibZ': return item.vibZ || 0;
+                    default: return 0;
+                }
+            });
+            
+            // Nomes das variáveis
+            const varLabels = {
+                'temperatura': 'Temperatura (°C)',
+                'rms': 'RMS Total (m/s²)',
+                'vibX': 'Horizontal X (m/s²)',
+                'vibY': 'Axial Y (m/s²)',
+                'vibZ': 'Vertical Z (m/s²)'
+            };
+            
+            const motor = motores.find(m => m.id == motorId);
+            const motorNome = motor ? motor.nome : `ID ${motorId}`;
+            
+            // Atualizar título
+            document.getElementById('historicoChartTitle').innerHTML = `📊 ${motorNome} - ${varLabels[variavel]} - ${dataSelecionada}`;
+            
+            // Criar gráfico
+            const ctx = document.getElementById('historicoChart').getContext('2d');
+            if (historicoChart) historicoChart.destroy();
+            
+            // Configuração base do gráfico
+            let chartConfig = {
+                type: tipoGrafico,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: varLabels[variavel],
+                        data: valores,
+                        borderColor: '#f39c12',
+                        backgroundColor: tipoGrafico === 'bar' ? 'rgba(243, 156, 18, 0.6)' : 'rgba(243, 156, 18, 0.2)',
+                        borderWidth: 2,
+                        fill: tipoGrafico !== 'bar' && tipoGrafico !== 'scatter',
+                        tension: 0.1,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#f39c12'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.raw} ${varLabels[variavel].split('(')[1]?.replace(')', '') || ''}`
+                            }
+                        },
+                        legend: { labels: { color: '#fff' } }
+                    },
+                    scales: tipoGrafico !== 'radar' ? {
+                        y: {
+                            ticks: { color: '#ccc' },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            title: { display: true, text: varLabels[variavel], color: '#ccc' }
+                        },
+                        x: {
+                            ticks: { color: '#ccc', rotation: 45, autoSkip: true, maxRotation: 45 },
+                            title: { display: true, text: 'Horário', color: '#ccc' }
+                        }
+                    } : undefined
+                }
+            };
+            
+            historicoChart = new Chart(ctx, chartConfig);
+            
+            // Calcular estatísticas
+            const valoresNumericos = valores.filter(v => v !== null && !isNaN(v));
+            if (valoresNumericos.length > 0) {
+                const min = Math.min(...valoresNumericos);
+                const max = Math.max(...valoresNumericos);
+                const avg = valoresNumericos.reduce((a,b) => a+b, 0) / valoresNumericos.length;
+                const first = valoresNumericos[0];
+                const last = valoresNumericos[valoresNumericos.length - 1];
+                const variacao = ((last - first) / (first || 1) * 100).toFixed(1);
+                
+                document.getElementById('historicoStats').innerHTML = `
+                    <div class="stat-item"><span class="stat-label">📊 Leituras:</span> <span class="stat-value">${valoresNumericos.length}</span></div>
+                    <div class="stat-item"><span class="stat-label">📈 Mínimo:</span> <span class="stat-value">${min.toFixed(2)}</span></div>
+                    <div class="stat-item"><span class="stat-label">📉 Máximo:</span> <span class="stat-value">${max.toFixed(2)}</span></div>
+                    <div class="stat-item"><span class="stat-label">📊 Média:</span> <span class="stat-value">${avg.toFixed(2)}</span></div>
+                    <div class="stat-item"><span class="stat-label">🔄 Variação:</span> <span class="stat-value ${variacao >= 0 ? 'status-alerta' : 'status-normal'}">${variacao}%</span></div>
+                `;
+            } else {
+                document.getElementById('historicoStats').innerHTML = '<div class="stat-item">Sem dados válidos</div>';
+            }
+            
+            // Preencher tabela
+            const tbody = document.getElementById('historicoTableBody');
+            tbody.innerHTML = '';
+            dadosFiltrados.forEach(item => {
+                let valor = 0;
+                switch(variavel) {
+                    case 'temperatura': valor = item.temperatura; break;
+                    case 'rms': valor = item.rms; break;
+                    case 'vibX': valor = item.vibX; break;
+                    case 'vibY': valor = item.vibY; break;
+                    case 'vibZ': valor = item.vibZ; break;
+                }
+                const unidade = varLabels[variavel].split('(')[1]?.replace(')', '') || '';
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td style="padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">${item.data}</td>
+                    <td style="padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold; color: #f39c12;">${valor !== undefined && valor !== null ? valor.toFixed(2) : '--'}</td>
+                    <td style="padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">${unidade}</td>
+                `;
+            });
+            
+            document.getElementById('historicoCard').style.display = 'block';
+            document.getElementById('emptyHistorico').style.display = 'none';
+            
+        } catch (error) {
+            console.error('Erro ao carregar histórico:', error);
+            showToast('❌ Erro ao carregar histórico', 2000);
+            document.getElementById('historicoCard').style.display = 'none';
+            document.getElementById('emptyHistorico').style.display = 'block';
+            document.getElementById('emptyHistorico').innerHTML = '❌ Erro ao carregar dados. Verifique a conexão com o servidor.';
+        }
+    }
+    
+    // ==================== FUNÇÕES EXISTENTES (mantidas) ====================
     function verificarSessao() {
         const authenticated = sessionStorage.getItem('authenticated');
         if (authenticated === 'true') {
@@ -1221,21 +1401,16 @@
     document.getElementById('password')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') performLogin(); });
     document.getElementById('loginBtn')?.addEventListener('click', performLogin);
     
-    // ==================== VARIÁVEIS GLOBAIS ====================
+    // Variáveis globais
     let motores = [];
     let motorSelecionado = null;
     let motorAlarmSelecionado = null;
     let alarmConfigs = {};
     let pollingInterval = null;
-    
-    // 🔥 NOVAS VARIÁVEIS PARA FFT
     let fftChart = null;
-    
-    // Gráficos personalizados
     let customCharts = [];
     let chartInstances = {};
     
-    // Mapeamento de variáveis
     const varNames = {
         'temperatura': '🌡️ Temperatura (°C)',
         'rms': '📊 RMS Total (m/s²)',
@@ -1244,24 +1419,44 @@
         'vibZ': '🟠 Vertical Z (m/s²)'
     };
     
-    // ==================== FUNÇÕES DE NAVEGAÇÃO ====================
+    // Funções de navegação
     function showDashboard() {
         document.getElementById('dashboardContainer').style.display = 'block';
         document.getElementById('customChartsContainer').style.display = 'none';
+        document.getElementById('historicoContainer').style.display = 'none';
         carregarDadosAPI();
     }
     
     function showCustomCharts() {
         document.getElementById('dashboardContainer').style.display = 'none';
         document.getElementById('customChartsContainer').style.display = 'block';
+        document.getElementById('historicoContainer').style.display = 'none';
         setTimeout(() => {
-            if (customCharts.length > 0) {
-                carregarCustomChartsData();
-            }
+            if (customCharts.length > 0) carregarCustomChartsData();
         }, 200);
     }
     
-    // ==================== CARREGAR MOTORES ====================
+    function showHistorico() {
+        document.getElementById('dashboardContainer').style.display = 'none';
+        document.getElementById('customChartsContainer').style.display = 'none';
+        document.getElementById('historicoContainer').style.display = 'block';
+        
+        const historicoSelect = document.getElementById('historicoMotorSelect');
+        historicoSelect.innerHTML = '<option value="">Selecione um motor...</option>';
+        motores.forEach(motor => {
+            const option = document.createElement('option');
+            option.value = motor.id;
+            option.textContent = `[ID ${motor.id}] ${motor.nome} - ${motor.marca}`;
+            historicoSelect.appendChild(option);
+        });
+        
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('historicoDataSelect').value = today;
+        document.getElementById('historicoCard').style.display = 'none';
+        document.getElementById('emptyHistorico').style.display = 'block';
+    }
+    
+    // Funções de carregamento de motores e dados (mantidas)
     function calcularProximoId() {
         if (motores.length === 0) return 1;
         const idsExistentes = motores.map(m => m.id).sort((a, b) => a - b);
@@ -1286,6 +1481,18 @@
                 const proximoId = calcularProximoId();
                 const nextIdInfo = document.getElementById('nextIdInfo');
                 if (nextIdInfo) nextIdInfo.innerHTML = `🔹 Próximo ID: ${proximoId}`;
+                
+                // Atualizar também o select do histórico
+                const historicoSelect = document.getElementById('historicoMotorSelect');
+                if (historicoSelect) {
+                    historicoSelect.innerHTML = '<option value="">Selecione um motor...</option>';
+                    motores.forEach(motor => {
+                        const option = document.createElement('option');
+                        option.value = motor.id;
+                        option.textContent = `[ID ${motor.id}] ${motor.nome} - ${motor.marca}`;
+                        historicoSelect.appendChild(option);
+                    });
+                }
             }
         } catch (err) {
             console.error('Erro ao carregar motores:', err);
@@ -1440,7 +1647,6 @@
         } catch (err) { showToast('❌ Erro de conexão'); }
     }
     
-    // ==================== CONFIGURAÇÕES DE ALARME ====================
     function carregarAlarmConfigs() {
         const saved = localStorage.getItem('tpDynamicsAlarmsByMotor');
         if (saved) {
@@ -1531,7 +1737,7 @@
         document.getElementById('configModal').style.display = 'flex';
     }
     
-    // ==================== GRÁFICOS PERSONALIZADOS ====================
+    // Gráficos personalizados
     function carregarCustomCharts() {
         const saved = localStorage.getItem('tpDynamicsCustomCharts');
         if (saved) {
@@ -1572,10 +1778,7 @@
         document.getElementById('newChartMin').value = '';
         document.getElementById('newChartMax').value = '';
         
-        setTimeout(() => {
-            carregarCustomChartsData();
-        }, 100);
-        
+        setTimeout(() => carregarCustomChartsData(), 100);
         showToast(`✅ Gráfico "${title}" adicionado!`, 2000);
     }
     
@@ -1620,11 +1823,7 @@
             salvarCustomCharts();
             renderCustomCharts();
             document.getElementById('editChartModal').style.display = 'none';
-            
-            setTimeout(() => {
-                carregarCustomChartsData();
-            }, 100);
-            
+            setTimeout(() => carregarCustomChartsData(), 100);
             showToast(`✅ Gráfico atualizado!`, 2000);
         }
     }
@@ -1710,9 +1909,7 @@
     async function carregarCustomChartsData() {
         for (const chart of customCharts) {
             let url = '/api/dados/';
-            if (chart.motorId) {
-                url += `?motor_id=${chart.motorId}`;
-            }
+            if (chart.motorId) url += `?motor_id=${chart.motorId}`;
             try {
                 const response = await fetch(url);
                 if (response.ok) {
@@ -1720,27 +1917,17 @@
                     atualizarCustomChart(chart.id, chart.variable, chart.color, chart.title, dados, chart.minY, chart.maxY);
                 } else {
                     console.error(`Erro ao carregar dados para ${chart.title}:`, response.status);
-                    const loadingDiv = document.getElementById(`loading-${chart.id}`);
-                    if (loadingDiv) loadingDiv.innerHTML = '❌ Erro ao carregar dados';
                 }
-            } catch (err) { 
-                console.error('Erro:', err);
-                const loadingDiv = document.getElementById(`loading-${chart.id}`);
-                if (loadingDiv) loadingDiv.innerHTML = '❌ Erro de conexão';
-            }
+            } catch (err) { console.error('Erro:', err); }
         }
     }
     
     function atualizarCustomChart(chartId, variable, color, title, dados, minY, maxY) {
         const canvas = document.getElementById(`chart-${chartId}`);
         const loadingDiv = document.getElementById(`loading-${chartId}`);
-        
         if (!canvas) return;
-        
         if (loadingDiv) loadingDiv.style.display = 'none';
-        
         const ctx = canvas.getContext('2d');
-        
         if (!dados || dados.length === 0) {
             if (loadingDiv) {
                 loadingDiv.style.display = 'block';
@@ -1748,10 +1935,8 @@
             }
             return;
         }
-        
         const dadosOrdenados = [...dados].reverse();
         const pontos = [];
-        
         dadosOrdenados.forEach(item => {
             let timestamp = Date.now();
             if (item.data) {
@@ -1771,16 +1956,13 @@
             }
             pontos.push({ x: timestamp, y: valor });
         });
-        
         if (chartInstances[chartId]) {
             chartInstances[chartId].destroy();
             delete chartInstances[chartId];
         }
-        
         const yConfig = {};
         if (minY !== null && minY !== undefined && !isNaN(minY)) yConfig.min = minY;
         if (maxY !== null && maxY !== undefined && !isNaN(maxY)) yConfig.max = maxY;
-        
         try {
             chartInstances[chartId] = new Chart(ctx, {
                 type: 'line',
@@ -1797,38 +1979,21 @@
                     }] 
                 },
                 options: {
-                    responsive: true, 
-                    maintainAspectRatio: true,
-                    plugins: { 
-                        tooltip: { mode: 'index', intersect: false }, 
-                        legend: { labels: { color: '#fff' } } 
-                    },
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: { tooltip: { mode: 'index', intersect: false }, legend: { labels: { color: '#fff' } } },
                     scales: { 
-                        x: { 
-                            type: 'time', 
-                            time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } }, 
-                            ticks: { color: '#ccc' }, 
-                            title: { display: true, text: 'Tempo', color: '#ccc' } 
-                        }, 
-                        y: { 
-                            ticks: { color: '#ccc' }, 
-                            grid: { color: 'rgba(255,255,255,0.1)' }, 
-                            title: { display: true, text: varNames[variable] || variable, color: '#ccc' }, 
-                            ...yConfig 
-                        } 
+                        x: { type: 'time', time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } }, ticks: { color: '#ccc' }, title: { display: true, text: 'Tempo', color: '#ccc' } }, 
+                        y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.1)' }, title: { display: true, text: varNames[variable] || variable, color: '#ccc' }, ...yConfig } 
                     }
                 }
             });
         } catch (err) {
             console.error('Erro ao criar gráfico:', err);
-            if (loadingDiv) {
-                loadingDiv.style.display = 'block';
-                loadingDiv.innerHTML = '❌ Erro ao criar gráfico';
-            }
+            if (loadingDiv) loadingDiv.innerHTML = '❌ Erro ao criar gráfico';
         }
     }
     
-    // ==================== DASHBOARD PRINCIPAL ====================
+    // Dashboard principal
     let tempChart, rmsChart, horizontalChart, verticalChart, axialChart;
     let dadosRecebidos = false;
     
@@ -1844,89 +2009,39 @@
         });
     }
     
-    // 🔥 GRÁFICO FFT EM LINHA - CORRIGIDO
     function criarGraficoFFT() {
         const ctx = document.getElementById('fftChart').getContext('2d');
         if (fftChart) fftChart.destroy();
         fftChart = new Chart(ctx, {
-            type: 'line',  // ALTERADO DE 'bar' PARA 'line'
-            data: { 
-                datasets: [{ 
-                    label: 'Amplitude (m/s²)', 
-                    data: [], 
-                    borderColor: '#3498db',
-                    backgroundColor: 'rgba(52,152,219,0.1)', 
-                    borderWidth: 2,
-                    fill: true,
-                    pointRadius: 2,
-                    pointBackgroundColor: '#3498db',
-                    pointBorderColor: '#fff',
-                    tension: 0.1
-                }] 
-            },
+            type: 'line',
+            data: { datasets: [{ label: 'Amplitude (m/s²)', data: [], borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', borderWidth: 2, fill: true, pointRadius: 2, pointBackgroundColor: '#3498db', pointBorderColor: '#fff', tension: 0.1 }] },
             options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: { 
-                        callbacks: { 
-                            label: (ctx) => `${ctx.raw.y.toFixed(3)} m/s²` 
-                        } 
-                    }
-                },
-                scales: {
-                    x: { 
-                        title: { display: true, text: 'Frequência (Hz)', color: '#aaa' }, 
-                        ticks: { color: '#aaa' } 
-                    },
-                    y: { 
-                        title: { display: true, text: 'Amplitude (m/s²)', color: '#aaa' }, 
-                        ticks: { color: '#aaa' }, 
-                        grid: { color: 'rgba(255,255,255,0.1)' } 
-                    }
-                }
+                responsive: true, maintainAspectRatio: true,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw.y.toFixed(3)} m/s²` } } },
+                scales: { x: { title: { display: true, text: 'Frequência (Hz)', color: '#aaa' }, ticks: { color: '#aaa' } }, y: { title: { display: true, text: 'Amplitude (m/s²)', color: '#aaa' }, ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.1)' } } }
             }
         });
     }
     
-    // 🔥 CORRIGIDO: Atualizar métricas SKF com verificações de segurança
     function atualizarMetricasSKF(analise) {
         if (!analise) return;
+        if (analise.crest_factor !== undefined && analise.crest_factor !== null) document.getElementById('skfCrest').innerHTML = analise.crest_factor.toFixed(2);
+        else document.getElementById('skfCrest').innerHTML = '--';
         
-        // Crest Factor
-        if (analise.crest_factor !== undefined && analise.crest_factor !== null) {
-            document.getElementById('skfCrest').innerHTML = analise.crest_factor.toFixed(2);
-        } else {
-            document.getElementById('skfCrest').innerHTML = '--';
-        }
-        
-        // Kurtosis
         if (analise.kurtosis !== undefined && analise.kurtosis !== null) {
             const kurtosisEl = document.getElementById('skfKurtosis');
             kurtosisEl.innerHTML = analise.kurtosis.toFixed(2);
             if (analise.kurtosis > 3) kurtosisEl.style.color = '#e74c3c';
             else if (analise.kurtosis > 2) kurtosisEl.style.color = '#f39c12';
             else kurtosisEl.style.color = '#2ecc71';
-        } else {
-            document.getElementById('skfKurtosis').innerHTML = '--';
-        }
+        } else document.getElementById('skfKurtosis').innerHTML = '--';
         
-        // Velocity
-        if (analise.rms_mm_s !== undefined && analise.rms_mm_s !== null) {
-            document.getElementById('skfVelocity').innerHTML = analise.rms_mm_s.toFixed(2);
-        } else {
-            document.getElementById('skfVelocity').innerHTML = '--';
-        }
+        if (analise.rms_mm_s !== undefined && analise.rms_mm_s !== null) document.getElementById('skfVelocity').innerHTML = analise.rms_mm_s.toFixed(2);
+        else document.getElementById('skfVelocity').innerHTML = '--';
         
-        // Frequência Dominante
-        if (analise.frequencia_dominante_x !== undefined && analise.frequencia_dominante_x !== null) {
-            document.getElementById('skfFreq').innerHTML = analise.frequencia_dominante_x.toFixed(1);
-        } else {
-            document.getElementById('skfFreq').innerHTML = '--';
-        }
+        if (analise.frequencia_dominante_x !== undefined && analise.frequencia_dominante_x !== null) document.getElementById('skfFreq').innerHTML = analise.frequencia_dominante_x.toFixed(1);
+        else document.getElementById('skfFreq').innerHTML = '--';
         
-        // Severidade
         let severidadeTexto = analise.severidade || 'Normal';
         const severidadeEl = document.getElementById('skfSeveridade');
         severidadeEl.innerHTML = severidadeTexto;
@@ -1940,44 +2055,22 @@
         if (analise.condicao_rolamento) diagnosticoHtml += `<strong>🔄 Rolamento:</strong> ${analise.condicao_rolamento}<br>`;
         if (analise.condicao_mancal) diagnosticoHtml += `<strong>⚙️ Mancal:</strong> ${analise.condicao_mancal}<br>`;
         if (analise.nivel_alerta) diagnosticoHtml += `<strong>⚠️ Alerta:</strong> ${analise.nivel_alerta}<br>`;
-        
-        if (analise.energia_alta_freq && analise.energia_alta_freq > 50) {
-            diagnosticoHtml += `<strong>⚠️ Alta frequência elevada</strong> - Possível falha em rolamento<br>`;
-        }
-        
         if (diagnosticoHtml === '') diagnosticoHtml = '✅ Equipamento em condição normal. Monitoramento contínuo.';
-        
         document.getElementById('skfDiagnostico').innerHTML = diagnosticoHtml;
     }
     
-    // 🔥 CORRIGIDO: Atualizar gráfico FFT com verificações de segurança
     function atualizarGraficoFFT(fftData) {
-        // Verificação de segurança completa
         if (!fftData || !fftData.fft_data || !Array.isArray(fftData.fft_data) || fftData.fft_data.length === 0) {
             document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT (256 amostras)...';
-            if (fftChart) {
-                fftChart.data.datasets[0].data = [];
-                fftChart.update();
-            }
+            if (fftChart) { fftChart.data.datasets[0].data = []; fftChart.update(); }
             return;
         }
-        
-        // Verificação de segurança para .toFixed()
         const freqMax = (fftData.freq_max !== undefined && fftData.freq_max !== null) ? fftData.freq_max.toFixed(1) : '--';
         const ampMax = (fftData.amp_max !== undefined && fftData.amp_max !== null) ? fftData.amp_max.toFixed(3) : '--';
-        
         document.getElementById('fftStatus').innerHTML = `✅ FFT gerada | Freq. Dominante: ${freqMax} Hz | Amp. Máx: ${ampMax} m/s²`;
-        
         const pontos = fftData.fft_data.map(p => ({ x: p.freq, y: p.amp }));
-        
-        if (fftChart) {
-            fftChart.data.datasets[0].data = pontos;
-            fftChart.update();
-        } else {
-            criarGraficoFFT();
-            if (fftChart) fftChart.data.datasets[0].data = pontos;
-            if (fftChart) fftChart.update();
-        }
+        if (fftChart) { fftChart.data.datasets[0].data = pontos; fftChart.update(); }
+        else { criarGraficoFFT(); if(fftChart){ fftChart.data.datasets[0].data = pontos; fftChart.update(); } }
     }
     
     function verificarEAlarm(cardId, valor, limite) {
@@ -1994,27 +2087,12 @@
     }
     
     function limparGraficos() {
-        if (tempChart) {
-            tempChart.data.datasets[0].data = [];
-            tempChart.update();
-        }
-        if (rmsChart) {
-            rmsChart.data.datasets[0].data = [];
-            rmsChart.update();
-        }
-        if (horizontalChart) {
-            horizontalChart.data.datasets[0].data = [];
-            horizontalChart.update();
-        }
-        if (verticalChart) {
-            verticalChart.data.datasets[0].data = [];
-            verticalChart.update();
-        }
-        if (axialChart) {
-            axialChart.data.datasets[0].data = [];
-            axialChart.update();
-        }
-        
+        if (tempChart) tempChart.data.datasets[0].data = [];
+        if (rmsChart) rmsChart.data.datasets[0].data = [];
+        if (horizontalChart) horizontalChart.data.datasets[0].data = [];
+        if (verticalChart) verticalChart.data.datasets[0].data = [];
+        if (axialChart) axialChart.data.datasets[0].data = [];
+        [tempChart, rmsChart, horizontalChart, verticalChart, axialChart].forEach(chart => { if(chart) chart.update(); });
         document.getElementById('tempValue').innerHTML = '-- °C';
         document.getElementById('rmsValue').innerHTML = '-- m/s²';
         document.getElementById('horizontalValue').innerHTML = '-- m/s²';
@@ -2025,8 +2103,7 @@
     async function carregarDadosAPI() {
         if (!motorSelecionado || motorSelecionado === '') {
             limparGraficos();
-            const lista = document.getElementById('historicoLista');
-            lista.innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
+            document.getElementById('historicoLista').innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
             document.getElementById('tempAtual').innerText = '--';
             document.getElementById('rmsAtual').innerText = '--';
             document.getElementById('horizAtual').innerText = '--';
@@ -2036,191 +2113,122 @@
             document.getElementById('noDataMessage').innerHTML = '⚠️ Selecione um motor para visualizar os dados.';
             return;
         }
-        
         let url = `/api/dados/?motor_id=${motorSelecionado}`;
-        
-        fetch(url)
-            .then(response => response.json())
-            .then(dados => {
-                const noDataDiv = document.getElementById('noDataMessage');
-                
-                if (dados && dados.length > 0) {
-                    dadosRecebidos = true;
-                    noDataDiv.style.display = 'none';
-                    
-                    const dadosOrdenados = [...dados].reverse();
-                    const ultimo = dados[dados.length - 1];
-                    
-                    document.getElementById('tempAtual').innerText = ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--';
-                    document.getElementById('rmsAtual').innerText = ultimo.rms ? ultimo.rms.toFixed(2) : '--';
-                    document.getElementById('horizAtual').innerText = ultimo.vibX ? ultimo.vibX.toFixed(2) : '--';
-                    document.getElementById('vertAtual').innerText = ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--';
-                    document.getElementById('axialAtual').innerText = ultimo.vibY ? ultimo.vibY.toFixed(2) : '--';
-                    
-                    document.getElementById('tempValue').innerHTML = `${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'} °C`;
-                    document.getElementById('rmsValue').innerHTML = `${ultimo.rms ? ultimo.rms.toFixed(2) : '--'} m/s²`;
-                    document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX ? ultimo.vibX.toFixed(2) : '--'} m/s²`;
-                    document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--'} m/s²`;
-                    document.getElementById('axialValue').innerHTML = `${ultimo.vibY ? ultimo.vibY.toFixed(2) : '--'} m/s²`;
-                    
-                    const alarmConfig = alarmConfigs[motorSelecionado] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
-                    verificarEAlarm('cardRMS', ultimo.rms || 0, alarmConfig.rms);
-                    verificarEAlarm('cardX', ultimo.vibX || 0, alarmConfig.x);
-                    verificarEAlarm('cardY', ultimo.vibY || 0, alarmConfig.y);
-                    verificarEAlarm('cardZ', ultimo.vibZ || 0, alarmConfig.z);
-                    verificarEAlarm('cardTemp', ultimo.temperatura || 0, alarmConfig.temp);
-                    
-                    const lista = document.getElementById('historicoLista');
-                    if (lista.children.length === 1 && lista.children[0].innerText.includes("Aguardando")) lista.innerHTML = '';
-                    const li = document.createElement('li');
-                    li.innerHTML = `<span class="historico-tempo">${ultimo.data || '--'}</span><span>${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'}°C | RMS ${ultimo.rms ? ultimo.rms.toFixed(2) : '--'}</span>`;
-                    lista.insertBefore(li, lista.firstChild);
-                    if (lista.children.length > 10) lista.removeChild(lista.lastChild);
-                    
-                    const pontosTemp = [], pontosRms = [], pontosHoriz = [], pontosVert = [], pontosAxial = [];
-                    
-                    dadosOrdenados.forEach(item => {
-                        let timestamp = Date.now();
-                        if (item.data) {
-                            const [h, m, s] = item.data.split(':');
-                            const date = new Date();
-                            date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
-                            timestamp = date.getTime();
-                        }
-                        pontosTemp.push({ x: timestamp, y: item.temperatura || 0 });
-                        pontosRms.push({ x: timestamp, y: item.rms || 0 });
-                        pontosHoriz.push({ x: timestamp, y: item.vibX || 0 });
-                        pontosVert.push({ x: timestamp, y: item.vibZ || 0 });
-                        pontosAxial.push({ x: timestamp, y: item.vibY || 0 });
-                    });
-                    
-                    if (tempChart) {
-                        tempChart.data.datasets[0].data = pontosTemp;
-                        tempChart.update();
+        fetch(url).then(response => response.json()).then(dados => {
+            const noDataDiv = document.getElementById('noDataMessage');
+            if (dados && dados.length > 0) {
+                dadosRecebidos = true;
+                noDataDiv.style.display = 'none';
+                const dadosOrdenados = [...dados].reverse();
+                const ultimo = dados[dados.length - 1];
+                document.getElementById('tempAtual').innerText = ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--';
+                document.getElementById('rmsAtual').innerText = ultimo.rms ? ultimo.rms.toFixed(2) : '--';
+                document.getElementById('horizAtual').innerText = ultimo.vibX ? ultimo.vibX.toFixed(2) : '--';
+                document.getElementById('vertAtual').innerText = ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--';
+                document.getElementById('axialAtual').innerText = ultimo.vibY ? ultimo.vibY.toFixed(2) : '--';
+                document.getElementById('tempValue').innerHTML = `${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'} °C`;
+                document.getElementById('rmsValue').innerHTML = `${ultimo.rms ? ultimo.rms.toFixed(2) : '--'} m/s²`;
+                document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX ? ultimo.vibX.toFixed(2) : '--'} m/s²`;
+                document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--'} m/s²`;
+                document.getElementById('axialValue').innerHTML = `${ultimo.vibY ? ultimo.vibY.toFixed(2) : '--'} m/s²`;
+                const alarmConfig = alarmConfigs[motorSelecionado] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
+                verificarEAlarm('cardRMS', ultimo.rms || 0, alarmConfig.rms);
+                verificarEAlarm('cardX', ultimo.vibX || 0, alarmConfig.x);
+                verificarEAlarm('cardY', ultimo.vibY || 0, alarmConfig.y);
+                verificarEAlarm('cardZ', ultimo.vibZ || 0, alarmConfig.z);
+                verificarEAlarm('cardTemp', ultimo.temperatura || 0, alarmConfig.temp);
+                const lista = document.getElementById('historicoLista');
+                if (lista.children.length === 1 && lista.children[0].innerText.includes("Aguardando")) lista.innerHTML = '';
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="historico-tempo">${ultimo.data || '--'}</span><span>${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'}°C | RMS ${ultimo.rms ? ultimo.rms.toFixed(2) : '--'}</span>`;
+                lista.insertBefore(li, lista.firstChild);
+                if (lista.children.length > 10) lista.removeChild(lista.lastChild);
+                const pontosTemp = [], pontosRms = [], pontosHoriz = [], pontosVert = [], pontosAxial = [];
+                dadosOrdenados.forEach(item => {
+                    let timestamp = Date.now();
+                    if (item.data) {
+                        const [h, m, s] = item.data.split(':');
+                        const date = new Date();
+                        date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
+                        timestamp = date.getTime();
                     }
-                    if (rmsChart) {
-                        rmsChart.data.datasets[0].data = pontosRms;
-                        rmsChart.update();
-                    }
-                    if (horizontalChart) {
-                        horizontalChart.data.datasets[0].data = pontosHoriz;
-                        horizontalChart.update();
-                    }
-                    if (verticalChart) {
-                        verticalChart.data.datasets[0].data = pontosVert;
-                        verticalChart.update();
-                    }
-                    if (axialChart) {
-                        axialChart.data.datasets[0].data = pontosAxial;
-                        axialChart.update();
-                    }
-                    
-                } else {
-                    noDataDiv.style.display = 'block';
-                    noDataDiv.innerHTML = `⚠️ Nenhum dado encontrado para o motor ID ${motorSelecionado}. Aguardando leituras...`;
-                    limparGraficos();
-                    document.getElementById('tempAtual').innerText = '--';
-                    document.getElementById('rmsAtual').innerText = '--';
-                    document.getElementById('horizAtual').innerText = '--';
-                    document.getElementById('vertAtual').innerText = '--';
-                    document.getElementById('axialAtual').innerText = '--';
-                    const lista = document.getElementById('historicoLista');
-                    lista.innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao buscar dados:', error);
+                    pontosTemp.push({ x: timestamp, y: item.temperatura || 0 });
+                    pontosRms.push({ x: timestamp, y: item.rms || 0 });
+                    pontosHoriz.push({ x: timestamp, y: item.vibX || 0 });
+                    pontosVert.push({ x: timestamp, y: item.vibZ || 0 });
+                    pontosAxial.push({ x: timestamp, y: item.vibY || 0 });
+                });
+                if (tempChart) { tempChart.data.datasets[0].data = pontosTemp; tempChart.update(); }
+                if (rmsChart) { rmsChart.data.datasets[0].data = pontosRms; rmsChart.update(); }
+                if (horizontalChart) { horizontalChart.data.datasets[0].data = pontosHoriz; horizontalChart.update(); }
+                if (verticalChart) { verticalChart.data.datasets[0].data = pontosVert; verticalChart.update(); }
+                if (axialChart) { axialChart.data.datasets[0].data = pontosAxial; axialChart.update(); }
+            } else {
+                noDataDiv.style.display = 'block';
+                noDataDiv.innerHTML = `⚠️ Nenhum dado encontrado para o motor ID ${motorSelecionado}. Aguardando leituras...`;
                 limparGraficos();
-                document.getElementById('noDataMessage').style.display = 'block';
-                document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
-            });
+                document.getElementById('tempAtual').innerText = '--';
+                document.getElementById('rmsAtual').innerText = '--';
+                document.getElementById('horizAtual').innerText = '--';
+                document.getElementById('vertAtual').innerText = '--';
+                document.getElementById('axialAtual').innerText = '--';
+                document.getElementById('historicoLista').innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
+            }
+        }).catch(error => {
+            console.error('Erro ao buscar dados:', error);
+            limparGraficos();
+            document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
+        });
         
-        // 🔥 Buscar análise avançada (FFT e métricas SKF) com tratamento de erro
         try {
             const response = await fetch(`/api/analise/${motorSelecionado}/`);
             if (response.ok) {
                 const analise = await response.json();
                 if (analise.analise_basica) atualizarMetricasSKF(analise.analise_basica);
-                if (analise.diagnostico) {
-                    const diag = analise.diagnostico;
-                    let diagnosticoHtml = `<strong>📋 Recomendação:</strong> ${diag.recomendacao || 'Monitorar'}<br>`;
-                    diagnosticoHtml += `<strong>🔄 Rolamento:</strong> ${diag.condicao_rolamento || 'Normal'}<br>`;
-                    diagnosticoHtml += `<strong>⚙️ Mancal:</strong> ${diag.condicao_mancal || 'Normal'}<br>`;
-                    diagnosticoHtml += `<strong>⚠️ Alerta:</strong> ${diag.nivel_alerta || 'NORMAL'}`;
-                    document.getElementById('skfDiagnostico').innerHTML = diagnosticoHtml;
-                }
             }
-        } catch (err) {
-            console.log('Análise avançada não disponível ainda:', err);
-        }
+        } catch (err) { console.log('Análise avançada não disponível ainda:', err); }
         
-        // 🔥 Buscar dados FFT com tratamento de erro completo
         try {
             const response = await fetch(`/api/fft/${motorSelecionado}/`);
-            
-            // Verificar se a resposta é OK antes de processar
-            if (!response.ok) {
-                console.warn(`FFT não disponível: ${response.status} - ${response.statusText}`);
-                document.getElementById('fftStatus').innerHTML = `⏳ FFT indisponível (HTTP ${response.status}) - Aguardando amostras...`;
-                return;
-            }
-            
+            if (!response.ok) { document.getElementById('fftStatus').innerHTML = `⏳ FFT indisponível (HTTP ${response.status}) - Aguardando amostras...`; return; }
             const fftData = await response.json();
-            
-            // Verificar se os dados existem e têm a estrutura esperada
-            if (fftData && fftData.fft_data && Array.isArray(fftData.fft_data) && fftData.fft_data.length > 0) {
-                atualizarGraficoFFT(fftData);
-            } else {
-                document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT (256 amostras)...';
-                if (fftChart) {
-                    fftChart.data.datasets[0].data = [];
-                    fftChart.update();
-                }
-            }
-        } catch (err) {
-            console.error('Erro ao buscar FFT:', err);
-            document.getElementById('fftStatus').innerHTML = '❌ Erro ao carregar FFT';
-        }
+            if (fftData && fftData.fft_data && Array.isArray(fftData.fft_data) && fftData.fft_data.length > 0) atualizarGraficoFFT(fftData);
+            else { document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT (256 amostras)...'; if(fftChart){ fftChart.data.datasets[0].data = []; fftChart.update(); } }
+        } catch (err) { console.error('Erro ao buscar FFT:', err); document.getElementById('fftStatus').innerHTML = '❌ Erro ao carregar FFT'; }
     }
     
     function initDashboard() {
         carregarMotores();
         carregarCustomCharts();
         criarGraficoFFT();
-        
         const ctxTemp = document.getElementById('tempChart').getContext('2d');
         const ctxRms = document.getElementById('rmsChart').getContext('2d');
         const ctxHoriz = document.getElementById('horizontalChart').getContext('2d');
         const ctxVert = document.getElementById('verticalChart').getContext('2d');
         const ctxAxial = document.getElementById('axialChart').getContext('2d');
-        
         tempChart = criarGrafico(ctxTemp, 'Temperatura (°C)', '#e67e22');
         rmsChart = criarGrafico(ctxRms, 'RMS (m/s²)', '#9b59b6');
         horizontalChart = criarGrafico(ctxHoriz, 'Horizontal X (m/s²)', '#3498db');
         verticalChart = criarGrafico(ctxVert, 'Vertical Z (m/s²)', '#f39c12');
         axialChart = criarGrafico(ctxAxial, 'Axial Y (m/s²)', '#2ecc71');
-        
         carregarDadosAPI();
-        
         if (pollingInterval) clearInterval(pollingInterval);
         pollingInterval = setInterval(() => {
             carregarDadosAPI();
-            if (document.getElementById('customChartsContainer').style.display === 'block') {
-                carregarCustomChartsData();
-            }
+            if (document.getElementById('customChartsContainer').style.display === 'block') carregarCustomChartsData();
         }, 5000);
-        
         setupMenuAndActions();
-        
         document.getElementById('motorSelect').addEventListener('change', (e) => {
             motorSelecionado = e.target.value ? parseInt(e.target.value) : null;
             const motor = motores.find(m => m.id === motorSelecionado);
             document.getElementById('motorInfo').innerHTML = motor ? `ID: ${motor.id} | ${motor.rpm} RPM` : '';
             carregarDadosAPI();
         });
-        
         document.getElementById('addChartBtn').addEventListener('click', adicionarChart);
         document.getElementById('backToDashboardBtn').addEventListener('click', showDashboard);
+        document.getElementById('backFromHistoricoBtn').addEventListener('click', showDashboard);
+        document.getElementById('btnCarregarHistorico').addEventListener('click', carregarHistoricoDiario);
         document.getElementById('saveEditBtn').addEventListener('click', salvarEditChart);
         document.getElementById('cancelEditBtn').addEventListener('click', () => document.getElementById('editChartModal').style.display = 'none');
         document.getElementById('saveAlarms').addEventListener('click', saveAlarmForMotor);
@@ -2234,7 +2242,8 @@
     function setupMenuAndActions() {
         const menus = [
             { btn: 'menuBtn', dropdown: 'menuDropdown' },
-            { btn: 'menuBtn2', dropdown: 'menuDropdown2' }
+            { btn: 'menuBtn2', dropdown: 'menuDropdown2' },
+            { btn: 'menuBtn3', dropdown: 'menuDropdown3' }
         ];
         menus.forEach(({ btn, dropdown }) => {
             const btnEl = document.getElementById(btn);
@@ -2246,17 +2255,21 @@
         });
         
         const actions = [
-            { id: 'menuDashboard', fn: showDashboard }, { id: 'menuDashboard2', fn: showDashboard },
-            { id: 'menuCustomCharts', fn: showCustomCharts }, { id: 'menuCustomCharts2', fn: showCustomCharts },
+            { id: 'menuDashboard', fn: showDashboard }, { id: 'menuDashboard2', fn: showDashboard }, { id: 'menuDashboard3', fn: showDashboard },
+            { id: 'menuCustomCharts', fn: showCustomCharts }, { id: 'menuCustomCharts2', fn: showCustomCharts }, { id: 'menuCustomCharts3', fn: showCustomCharts },
+            { id: 'menuHistorico', fn: showHistorico }, { id: 'menuHistorico2', fn: showHistorico }, { id: 'menuHistorico3', fn: showHistorico },
             { id: 'menuMotores', fn: () => document.getElementById('motoresModal').style.display = 'flex' },
             { id: 'menuMotores2', fn: () => document.getElementById('motoresModal').style.display = 'flex' },
-            { id: 'menuConfig', fn: openAlarmModal }, { id: 'menuConfig2', fn: openAlarmModal },
-            { id: 'menuExport', fn: () => showToast('📁 Dados exportados!') }, { id: 'menuExport2', fn: () => showToast('📁 Dados exportados!') },
-            { id: 'menuAjuda', fn: () => showToast('❓ Selecione motor e configure escala para cada gráfico!') }, 
+            { id: 'menuMotores3', fn: () => document.getElementById('motoresModal').style.display = 'flex' },
+            { id: 'menuConfig', fn: openAlarmModal }, { id: 'menuConfig2', fn: openAlarmModal }, { id: 'menuConfig3', fn: openAlarmModal },
+            { id: 'menuExport', fn: () => showToast('📁 Dados exportados!') }, { id: 'menuExport2', fn: () => showToast('📁 Dados exportados!') }, { id: 'menuExport3', fn: () => showToast('📁 Dados exportados!') },
+            { id: 'menuAjuda', fn: () => showToast('❓ Selecione motor e configure escala para cada gráfico!') },
             { id: 'menuAjuda2', fn: () => showToast('❓ Selecione motor e configure escala para cada gráfico!') },
-            { id: 'menuSobre', fn: () => showToast('ℹ️ TP Dynamics IoT - Criado por Tales Benites Ponciani') }, 
+            { id: 'menuAjuda3', fn: () => showToast('❓ Selecione motor e configure escala para cada gráfico!') },
+            { id: 'menuSobre', fn: () => showToast('ℹ️ TP Dynamics IoT - Criado por Tales Benites Ponciani') },
             { id: 'menuSobre2', fn: () => showToast('ℹ️ TP Dynamics IoT - Criado por Tales Benites Ponciani') },
-            { id: 'menuLogout', fn: fazerLogout }, { id: 'menuLogout2', fn: fazerLogout }
+            { id: 'menuSobre3', fn: () => showToast('ℹ️ TP Dynamics IoT - Criado por Tales Benites Ponciani') },
+            { id: 'menuLogout', fn: fazerLogout }, { id: 'menuLogout2', fn: fazerLogout }, { id: 'menuLogout3', fn: fazerLogout }
         ];
         actions.forEach(({ id, fn }) => {
             document.getElementById(id)?.addEventListener('click', (e) => { e.preventDefault(); fn(); document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show')); });
