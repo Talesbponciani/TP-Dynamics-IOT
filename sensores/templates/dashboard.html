@@ -134,6 +134,21 @@
             padding: 6px;
             border-radius: 40px;
         }
+        .creator-credit {
+            position: fixed;
+            bottom: 12px;
+            right: 16px;
+            z-index: 1001;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: #f0f0f0;
+            font-family: monospace;
+            border: 1px solid rgba(255,255,200,0.2);
+            pointer-events: none;
+        }
         
         .dashboard-container, .custom-charts-container {
             display: none;
@@ -278,7 +293,11 @@
             justify-content: space-between;
         }
         .historico-tempo { font-family: monospace; font-weight: bold; color: #f39c12; }
+        .status-normal { color: #2ecc71; }
+        .status-alerta { color: #f1c40f; }
+        .status-critico { color: #e74c3c; }
         
+        /* Cards com tamanho único - largura e altura fixas */
         .card {
             background: rgba(30,30,30,0.75);
             backdrop-filter: blur(8px);
@@ -357,6 +376,7 @@
         canvas { width: 100% !important; height: auto !important; max-height: 200px; }
         h3 { margin: 0 0 10px 0; font-size: 0.9rem; color: #eee; }
         
+        /* 🔥 NOVOS ESTILOS PARA MÉTRICAS SKF E FFT */
         .skf-metrics-panel {
             background: rgba(20,20,20,0.7);
             backdrop-filter: blur(8px);
@@ -400,6 +420,9 @@
             font-size: 0.8rem;
             color: #ddd;
         }
+        .status-good { color: #2ecc71; }
+        .status-warning { color: #f39c12; }
+        .status-critical { color: #e74c3c; }
         .fft-container {
             margin-top: 20px;
             margin-bottom: 20px;
@@ -553,12 +576,36 @@
             background: #f39c12;
             color: white;
         }
+        .custom-canvas {
+            width: 100% !important;
+            max-height: 250px !important;
+        }
         .empty-charts {
             text-align: center;
             padding: 60px 20px;
             background: rgba(20,20,20,0.5);
             border-radius: 20px;
             color: #aaa;
+        }
+        .motor-filter {
+            background: rgba(0,0,0,0.4);
+            padding: 10px 15px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .motor-filter label {
+            font-size: 0.85rem;
+            color: #ccc;
+        }
+        .motor-filter select {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,200,0.3);
+            border-radius: 20px;
+            padding: 6px 12px;
+            color: white;
         }
         .motor-selector select {
             background: rgba(0,0,0,0.8);
@@ -750,6 +797,14 @@
             padding-top: 10px;
             border-top: 1px solid rgba(255,255,200,0.2);
         }
+        .scale-config {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .scale-config input {
+            width: 80px;
+        }
         
         .footer-credit {
             position: fixed;
@@ -850,7 +905,7 @@
         </div>
     </div>
 
-    <!-- Painel de Métricas SKF -->
+    <!-- 🔥 NOVO: Painel de Métricas SKF -->
     <div class="skf-metrics-panel">
         <h3 style="margin:0 0 10px 0;">🔬 Análise Avançada - Estilo SKF</h3>
         <div class="skf-metrics-grid">
@@ -917,7 +972,7 @@
         </div>
     </div>
 
-    <!-- Gráfico FFT em Linha -->
+    <!-- 🔥 GRÁFICO FFT EM LINHA -->
     <div class="chart-container fft-container">
         <h3>🎵 Espectro de Frequências (FFT) - Análise de Vibração</h3>
         <canvas id="fftChart" style="max-height: 250px;"></canvas>
@@ -1117,7 +1172,7 @@
 
 <div id="toastMsg" class="toast"></div>
 
-<!-- Rodapé fixo com créditos -->
+<!-- Rodapé fixo com créditos para todas as páginas -->
 <div class="footer-credit">✍️ Criado por Tales Benites Ponciani</div>
 
 <script>
@@ -1172,15 +1227,15 @@
     let motorAlarmSelecionado = null;
     let alarmConfigs = {};
     let pollingInterval = null;
+    
+    // 🔥 NOVAS VARIÁVEIS PARA FFT
     let fftChart = null;
+    
+    // Gráficos personalizados
     let customCharts = [];
     let chartInstances = {};
     
-    // Variável para controle de desconexão
-    let ultimoDadoRecebido = null;
-    let falhasConsecutivas = 0;
-    const MAX_FALHAS = 3; // Número de falhas consecutivas para considerar desconectado
-    
+    // Mapeamento de variáveis
     const varNames = {
         'temperatura': '🌡️ Temperatura (°C)',
         'rms': '📊 RMS Total (m/s²)',
@@ -1204,70 +1259,6 @@
                 carregarCustomChartsData();
             }
         }, 200);
-    }
-    
-    // ==================== FUNÇÃO PARA MOSTRAR EQUIPAMENTO DESCONECTADO ====================
-    function mostrarEquipamentoDesconectado() {
-        // Limpar todos os cards
-        document.getElementById('tempAtual').innerText = '--';
-        document.getElementById('rmsAtual').innerText = '--';
-        document.getElementById('horizAtual').innerText = '--';
-        document.getElementById('vertAtual').innerText = '--';
-        document.getElementById('axialAtual').innerText = '--';
-        
-        // Limpar valores atuais dos gráficos
-        document.getElementById('tempValue').innerHTML = '⚡ DESCONECTADO';
-        document.getElementById('rmsValue').innerHTML = '⚡ DESCONECTADO';
-        document.getElementById('horizontalValue').innerHTML = '⚡ DESCONECTADO';
-        document.getElementById('verticalValue').innerHTML = '⚡ DESCONECTADO';
-        document.getElementById('axialValue').innerHTML = '⚡ DESCONECTADO';
-        
-        // Limpar dados dos gráficos
-        if (tempChart) {
-            tempChart.data.datasets[0].data = [];
-            tempChart.update();
-        }
-        if (rmsChart) {
-            rmsChart.data.datasets[0].data = [];
-            rmsChart.update();
-        }
-        if (horizontalChart) {
-            horizontalChart.data.datasets[0].data = [];
-            horizontalChart.update();
-        }
-        if (verticalChart) {
-            verticalChart.data.datasets[0].data = [];
-            verticalChart.update();
-        }
-        if (axialChart) {
-            axialChart.data.datasets[0].data = [];
-            axialChart.update();
-        }
-        
-        // Limpar FFT
-        if (fftChart) {
-            fftChart.data.datasets[0].data = [];
-            fftChart.update();
-        }
-        document.getElementById('fftStatus').innerHTML = '❌ EQUIPAMENTO DESCONECTADO - Verifique a conexão do ESP32';
-        
-        // Limpar métricas SKF
-        document.getElementById('skfCrest').innerHTML = '--';
-        document.getElementById('skfKurtosis').innerHTML = '--';
-        document.getElementById('skfVelocity').innerHTML = '--';
-        document.getElementById('skfFreq').innerHTML = '--';
-        document.getElementById('skfSeveridade').innerHTML = '--';
-        document.getElementById('skfDiagnostico').innerHTML = '❌ Equipamento desconectado. Aguardando reconexão do ESP32...';
-        
-        // Limpar histórico
-        const lista = document.getElementById('historicoLista');
-        lista.innerHTML = '<li style="justify-content:center; color:#e74c3c;">❌ ESP32 DESCONECTADO - Aguardando reconexão...</li>';
-        
-        // Mensagem principal
-        const noDataDiv = document.getElementById('noDataMessage');
-        noDataDiv.style.display = 'block';
-        noDataDiv.style.color = '#e74c3c';
-        noDataDiv.innerHTML = '⚠️⚠️⚠️ EQUIPAMENTO DESCONECTADO! ⚠️⚠️⚠️<br>Verifique a energia do ESP32 e a conexão com a rede Wi-Fi.';
     }
     
     // ==================== CARREGAR MOTORES ====================
@@ -1853,12 +1844,12 @@
         });
     }
     
-    // Gráfico FFT em Linha
+    // 🔥 GRÁFICO FFT EM LINHA - CORRIGIDO
     function criarGraficoFFT() {
         const ctx = document.getElementById('fftChart').getContext('2d');
         if (fftChart) fftChart.destroy();
         fftChart = new Chart(ctx, {
-            type: 'line',
+            type: 'line',  // ALTERADO DE 'bar' PARA 'line'
             data: { 
                 datasets: [{ 
                     label: 'Amplitude (m/s²)', 
@@ -1899,15 +1890,18 @@
         });
     }
     
+    // 🔥 CORRIGIDO: Atualizar métricas SKF com verificações de segurança
     function atualizarMetricasSKF(analise) {
         if (!analise) return;
         
+        // Crest Factor
         if (analise.crest_factor !== undefined && analise.crest_factor !== null) {
             document.getElementById('skfCrest').innerHTML = analise.crest_factor.toFixed(2);
         } else {
             document.getElementById('skfCrest').innerHTML = '--';
         }
         
+        // Kurtosis
         if (analise.kurtosis !== undefined && analise.kurtosis !== null) {
             const kurtosisEl = document.getElementById('skfKurtosis');
             kurtosisEl.innerHTML = analise.kurtosis.toFixed(2);
@@ -1918,18 +1912,21 @@
             document.getElementById('skfKurtosis').innerHTML = '--';
         }
         
+        // Velocity
         if (analise.rms_mm_s !== undefined && analise.rms_mm_s !== null) {
             document.getElementById('skfVelocity').innerHTML = analise.rms_mm_s.toFixed(2);
         } else {
             document.getElementById('skfVelocity').innerHTML = '--';
         }
         
+        // Frequência Dominante
         if (analise.frequencia_dominante_x !== undefined && analise.frequencia_dominante_x !== null) {
             document.getElementById('skfFreq').innerHTML = analise.frequencia_dominante_x.toFixed(1);
         } else {
             document.getElementById('skfFreq').innerHTML = '--';
         }
         
+        // Severidade
         let severidadeTexto = analise.severidade || 'Normal';
         const severidadeEl = document.getElementById('skfSeveridade');
         severidadeEl.innerHTML = severidadeTexto;
@@ -1953,8 +1950,11 @@
         document.getElementById('skfDiagnostico').innerHTML = diagnosticoHtml;
     }
     
+    // 🔥 CORRIGIDO: Atualizar gráfico FFT com verificações de segurança
     function atualizarGraficoFFT(fftData) {
+        // Verificação de segurança completa
         if (!fftData || !fftData.fft_data || !Array.isArray(fftData.fft_data) || fftData.fft_data.length === 0) {
+            document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT (256 amostras)...';
             if (fftChart) {
                 fftChart.data.datasets[0].data = [];
                 fftChart.update();
@@ -1962,6 +1962,7 @@
             return;
         }
         
+        // Verificação de segurança para .toFixed()
         const freqMax = (fftData.freq_max !== undefined && fftData.freq_max !== null) ? fftData.freq_max.toFixed(1) : '--';
         const ampMax = (fftData.amp_max !== undefined && fftData.amp_max !== null) ? fftData.amp_max.toFixed(3) : '--';
         
@@ -2021,7 +2022,6 @@
         document.getElementById('axialValue').innerHTML = '-- m/s²';
     }
     
-    // ==================== CARREGAR DADOS API COM DETECÇÃO DE DESCONEXÃO ====================
     async function carregarDadosAPI() {
         if (!motorSelecionado || motorSelecionado === '') {
             limparGraficos();
@@ -2039,172 +2039,147 @@
         
         let url = `/api/dados/?motor_id=${motorSelecionado}`;
         
-        // Criar um AbortController para timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // Timeout de 8 segundos
-        
-        try {
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-                // Se a resposta não for OK (ex: 404, 500), incrementa falhas
-                falhasConsecutivas++;
-                if (falhasConsecutivas >= MAX_FALHAS) {
-                    mostrarEquipamentoDesconectado();
+        fetch(url)
+            .then(response => response.json())
+            .then(dados => {
+                const noDataDiv = document.getElementById('noDataMessage');
+                
+                if (dados && dados.length > 0) {
+                    dadosRecebidos = true;
+                    noDataDiv.style.display = 'none';
+                    
+                    const dadosOrdenados = [...dados].reverse();
+                    const ultimo = dados[dados.length - 1];
+                    
+                    document.getElementById('tempAtual').innerText = ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--';
+                    document.getElementById('rmsAtual').innerText = ultimo.rms ? ultimo.rms.toFixed(2) : '--';
+                    document.getElementById('horizAtual').innerText = ultimo.vibX ? ultimo.vibX.toFixed(2) : '--';
+                    document.getElementById('vertAtual').innerText = ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--';
+                    document.getElementById('axialAtual').innerText = ultimo.vibY ? ultimo.vibY.toFixed(2) : '--';
+                    
+                    document.getElementById('tempValue').innerHTML = `${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'} °C`;
+                    document.getElementById('rmsValue').innerHTML = `${ultimo.rms ? ultimo.rms.toFixed(2) : '--'} m/s²`;
+                    document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX ? ultimo.vibX.toFixed(2) : '--'} m/s²`;
+                    document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--'} m/s²`;
+                    document.getElementById('axialValue').innerHTML = `${ultimo.vibY ? ultimo.vibY.toFixed(2) : '--'} m/s²`;
+                    
+                    const alarmConfig = alarmConfigs[motorSelecionado] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
+                    verificarEAlarm('cardRMS', ultimo.rms || 0, alarmConfig.rms);
+                    verificarEAlarm('cardX', ultimo.vibX || 0, alarmConfig.x);
+                    verificarEAlarm('cardY', ultimo.vibY || 0, alarmConfig.y);
+                    verificarEAlarm('cardZ', ultimo.vibZ || 0, alarmConfig.z);
+                    verificarEAlarm('cardTemp', ultimo.temperatura || 0, alarmConfig.temp);
+                    
+                    const lista = document.getElementById('historicoLista');
+                    if (lista.children.length === 1 && lista.children[0].innerText.includes("Aguardando")) lista.innerHTML = '';
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="historico-tempo">${ultimo.data || '--'}</span><span>${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'}°C | RMS ${ultimo.rms ? ultimo.rms.toFixed(2) : '--'}</span>`;
+                    lista.insertBefore(li, lista.firstChild);
+                    if (lista.children.length > 10) lista.removeChild(lista.lastChild);
+                    
+                    const pontosTemp = [], pontosRms = [], pontosHoriz = [], pontosVert = [], pontosAxial = [];
+                    
+                    dadosOrdenados.forEach(item => {
+                        let timestamp = Date.now();
+                        if (item.data) {
+                            const [h, m, s] = item.data.split(':');
+                            const date = new Date();
+                            date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
+                            timestamp = date.getTime();
+                        }
+                        pontosTemp.push({ x: timestamp, y: item.temperatura || 0 });
+                        pontosRms.push({ x: timestamp, y: item.rms || 0 });
+                        pontosHoriz.push({ x: timestamp, y: item.vibX || 0 });
+                        pontosVert.push({ x: timestamp, y: item.vibZ || 0 });
+                        pontosAxial.push({ x: timestamp, y: item.vibY || 0 });
+                    });
+                    
+                    if (tempChart) {
+                        tempChart.data.datasets[0].data = pontosTemp;
+                        tempChart.update();
+                    }
+                    if (rmsChart) {
+                        rmsChart.data.datasets[0].data = pontosRms;
+                        rmsChart.update();
+                    }
+                    if (horizontalChart) {
+                        horizontalChart.data.datasets[0].data = pontosHoriz;
+                        horizontalChart.update();
+                    }
+                    if (verticalChart) {
+                        verticalChart.data.datasets[0].data = pontosVert;
+                        verticalChart.update();
+                    }
+                    if (axialChart) {
+                        axialChart.data.datasets[0].data = pontosAxial;
+                        axialChart.update();
+                    }
+                    
+                } else {
+                    noDataDiv.style.display = 'block';
+                    noDataDiv.innerHTML = `⚠️ Nenhum dado encontrado para o motor ID ${motorSelecionado}. Aguardando leituras...`;
+                    limparGraficos();
+                    document.getElementById('tempAtual').innerText = '--';
+                    document.getElementById('rmsAtual').innerText = '--';
+                    document.getElementById('horizAtual').innerText = '--';
+                    document.getElementById('vertAtual').innerText = '--';
+                    document.getElementById('axialAtual').innerText = '--';
+                    const lista = document.getElementById('historicoLista');
+                    lista.innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
                 }
+            })
+            .catch(error => {
+                console.error('Erro ao buscar dados:', error);
+                limparGraficos();
+                document.getElementById('noDataMessage').style.display = 'block';
+                document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
+            });
+        
+        // 🔥 Buscar análise avançada (FFT e métricas SKF) com tratamento de erro
+        try {
+            const response = await fetch(`/api/analise/${motorSelecionado}/`);
+            if (response.ok) {
+                const analise = await response.json();
+                if (analise.analise_basica) atualizarMetricasSKF(analise.analise_basica);
+                if (analise.diagnostico) {
+                    const diag = analise.diagnostico;
+                    let diagnosticoHtml = `<strong>📋 Recomendação:</strong> ${diag.recomendacao || 'Monitorar'}<br>`;
+                    diagnosticoHtml += `<strong>🔄 Rolamento:</strong> ${diag.condicao_rolamento || 'Normal'}<br>`;
+                    diagnosticoHtml += `<strong>⚙️ Mancal:</strong> ${diag.condicao_mancal || 'Normal'}<br>`;
+                    diagnosticoHtml += `<strong>⚠️ Alerta:</strong> ${diag.nivel_alerta || 'NORMAL'}`;
+                    document.getElementById('skfDiagnostico').innerHTML = diagnosticoHtml;
+                }
+            }
+        } catch (err) {
+            console.log('Análise avançada não disponível ainda:', err);
+        }
+        
+        // 🔥 Buscar dados FFT com tratamento de erro completo
+        try {
+            const response = await fetch(`/api/fft/${motorSelecionado}/`);
+            
+            // Verificar se a resposta é OK antes de processar
+            if (!response.ok) {
+                console.warn(`FFT não disponível: ${response.status} - ${response.statusText}`);
+                document.getElementById('fftStatus').innerHTML = `⏳ FFT indisponível (HTTP ${response.status}) - Aguardando amostras...`;
                 return;
             }
             
-            const dados = await response.json();
+            const fftData = await response.json();
             
-            // Verificar se o array está vazio ou se os dados são antigos (> 30 segundos)
-            const agora = Date.now();
-            let dadosAtualizados = false;
-            
-            if (dados && dados.length > 0) {
-                const ultimoRegistro = dados[dados.length - 1];
-                
-                // Verificar se o dado é recente (menos de 30 segundos)
-                let timestampRegistro = null;
-                if (ultimoRegistro.data) {
-                    const [h, m, s] = ultimoRegistro.data.split(':');
-                    const dataRegistro = new Date();
-                    dataRegistro.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
-                    timestampRegistro = dataRegistro.getTime();
-                    
-                    // Se o registro tem mais de 30 segundos, considerar desconectado
-                    if (agora - timestampRegistro < 30000) {
-                        dadosAtualizados = true;
-                    }
-                } else {
-                    // Se não tem timestamp, assumir que está atualizado
-                    dadosAtualizados = true;
-                }
-            }
-            
-            if (dados && dados.length > 0 && dadosAtualizados) {
-                // Reset contador de falhas
-                falhasConsecutivas = 0;
-                ultimoDadoRecebido = Date.now();
-                
-                const noDataDiv = document.getElementById('noDataMessage');
-                noDataDiv.style.display = 'none';
-                
-                const dadosOrdenados = [...dados].reverse();
-                const ultimo = dados[dados.length - 1];
-                
-                document.getElementById('tempAtual').innerText = ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--';
-                document.getElementById('rmsAtual').innerText = ultimo.rms ? ultimo.rms.toFixed(2) : '--';
-                document.getElementById('horizAtual').innerText = ultimo.vibX ? ultimo.vibX.toFixed(2) : '--';
-                document.getElementById('vertAtual').innerText = ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--';
-                document.getElementById('axialAtual').innerText = ultimo.vibY ? ultimo.vibY.toFixed(2) : '--';
-                
-                document.getElementById('tempValue').innerHTML = `${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'} °C`;
-                document.getElementById('rmsValue').innerHTML = `${ultimo.rms ? ultimo.rms.toFixed(2) : '--'} m/s²`;
-                document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX ? ultimo.vibX.toFixed(2) : '--'} m/s²`;
-                document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--'} m/s²`;
-                document.getElementById('axialValue').innerHTML = `${ultimo.vibY ? ultimo.vibY.toFixed(2) : '--'} m/s²`;
-                
-                const alarmConfig = alarmConfigs[motorSelecionado] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
-                verificarEAlarm('cardRMS', ultimo.rms || 0, alarmConfig.rms);
-                verificarEAlarm('cardX', ultimo.vibX || 0, alarmConfig.x);
-                verificarEAlarm('cardY', ultimo.vibY || 0, alarmConfig.y);
-                verificarEAlarm('cardZ', ultimo.vibZ || 0, alarmConfig.z);
-                verificarEAlarm('cardTemp', ultimo.temperatura || 0, alarmConfig.temp);
-                
-                const lista = document.getElementById('historicoLista');
-                if (lista.children.length === 1 && (lista.children[0].innerText.includes("Aguardando") || lista.children[0].innerText.includes("DESCONECTADO"))) lista.innerHTML = '';
-                const li = document.createElement('li');
-                li.innerHTML = `<span class="historico-tempo">${ultimo.data || '--'}</span><span>${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'}°C | RMS ${ultimo.rms ? ultimo.rms.toFixed(2) : '--'}</span>`;
-                lista.insertBefore(li, lista.firstChild);
-                if (lista.children.length > 10) lista.removeChild(lista.lastChild);
-                
-                const pontosTemp = [], pontosRms = [], pontosHoriz = [], pontosVert = [], pontosAxial = [];
-                
-                dadosOrdenados.forEach(item => {
-                    let timestamp = Date.now();
-                    if (item.data) {
-                        const [h, m, s] = item.data.split(':');
-                        const date = new Date();
-                        date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
-                        timestamp = date.getTime();
-                    }
-                    pontosTemp.push({ x: timestamp, y: item.temperatura || 0 });
-                    pontosRms.push({ x: timestamp, y: item.rms || 0 });
-                    pontosHoriz.push({ x: timestamp, y: item.vibX || 0 });
-                    pontosVert.push({ x: timestamp, y: item.vibZ || 0 });
-                    pontosAxial.push({ x: timestamp, y: item.vibY || 0 });
-                });
-                
-                if (tempChart) {
-                    tempChart.data.datasets[0].data = pontosTemp;
-                    tempChart.update();
-                }
-                if (rmsChart) {
-                    rmsChart.data.datasets[0].data = pontosRms;
-                    rmsChart.update();
-                }
-                if (horizontalChart) {
-                    horizontalChart.data.datasets[0].data = pontosHoriz;
-                    horizontalChart.update();
-                }
-                if (verticalChart) {
-                    verticalChart.data.datasets[0].data = pontosVert;
-                    verticalChart.update();
-                }
-                if (axialChart) {
-                    axialChart.data.datasets[0].data = pontosAxial;
-                    axialChart.update();
-                }
-                
+            // Verificar se os dados existem e têm a estrutura esperada
+            if (fftData && fftData.fft_data && Array.isArray(fftData.fft_data) && fftData.fft_data.length > 0) {
+                atualizarGraficoFFT(fftData);
             } else {
-                // Dados vazios ou desatualizados
-                falhasConsecutivas++;
-                if (falhasConsecutivas >= MAX_FALHAS) {
-                    mostrarEquipamentoDesconectado();
-                } else {
-                    const noDataDiv = document.getElementById('noDataMessage');
-                    noDataDiv.style.display = 'block';
-                    noDataDiv.innerHTML = `⚠️ Aguardando dados do motor ID ${motorSelecionado}... (${falhasConsecutivas}/${MAX_FALHAS})`;
+                document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT (256 amostras)...';
+                if (fftChart) {
+                    fftChart.data.datasets[0].data = [];
+                    fftChart.update();
                 }
             }
-        } catch (error) {
-            clearTimeout(timeoutId);
-            console.error('Erro ao buscar dados:', error);
-            
-            falhasConsecutivas++;
-            if (falhasConsecutivas >= MAX_FALHAS) {
-                mostrarEquipamentoDesconectado();
-            } else {
-                document.getElementById('noDataMessage').style.display = 'block';
-                document.getElementById('noDataMessage').innerHTML = `⚠️ Erro de conexão com o servidor. Tentativa ${falhasConsecutivas}/${MAX_FALHAS}`;
-            }
-        }
-        
-        // Buscar análise avançada e FFT apenas se o equipamento estiver conectado
-        if (falhasConsecutivas < MAX_FALHAS && motorSelecionado) {
-            try {
-                const analiseResponse = await fetch(`/api/analise/${motorSelecionado}/`);
-                if (analiseResponse.ok) {
-                    const analise = await analiseResponse.json();
-                    if (analise.analise_basica) atualizarMetricasSKF(analise.analise_basica);
-                }
-            } catch (err) {
-                console.log('Análise avançada não disponível:', err);
-            }
-            
-            try {
-                const fftResponse = await fetch(`/api/fft/${motorSelecionado}/`);
-                if (fftResponse.ok) {
-                    const fftData = await fftResponse.json();
-                    if (fftData && fftData.fft_data && Array.isArray(fftData.fft_data) && fftData.fft_data.length > 0) {
-                        atualizarGraficoFFT(fftData);
-                    }
-                }
-            } catch (err) {
-                console.log('FFT não disponível:', err);
-            }
+        } catch (err) {
+            console.error('Erro ao buscar FFT:', err);
+            document.getElementById('fftStatus').innerHTML = '❌ Erro ao carregar FFT';
         }
     }
     
@@ -2241,7 +2216,6 @@
             motorSelecionado = e.target.value ? parseInt(e.target.value) : null;
             const motor = motores.find(m => m.id === motorSelecionado);
             document.getElementById('motorInfo').innerHTML = motor ? `ID: ${motor.id} | ${motor.rpm} RPM` : '';
-            falhasConsecutivas = 0; // Reset falhas ao trocar de motor
             carregarDadosAPI();
         });
         
