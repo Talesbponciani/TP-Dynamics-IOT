@@ -166,4 +166,6 @@ def motores_listar(request):
 
 def ultimo_motor(request):
     m = Motor.objects.last()
-    return JsonResponse({'id': m.id, 'nome': m.nome} if m else {'erro': 'vazio'})
+    if m:
+        return JsonResponse({'id': m.id, 'nome': m.nome})
+    return JsonResponse({'erro': 'vazio'}, status=404)
