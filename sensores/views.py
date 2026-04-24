@@ -1,8 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from datetime import timedelta
 import json
 import math
 import numpy as np
@@ -10,11 +8,18 @@ from scipy.fft import fft, fftfreq
 from scipy import stats
 from collections import deque
 from datetime import datetime
+import os
+
 from .models import Leitura, Motor, MotorCalibration
 
 # ========== BUFFERS EM MEMÓRIA ==========
+# Estes buffers são limpos no deploy, mas as calibrações (offsets) 
+# que estão no banco de dados agora são PERMANENTES.
 buffers = {}
 BUFFER_SIZE = 64
+
+vel_buffers = {}
+VEL_BUFFER_SIZE = 50
 
 def dashboard(request):
     return render(request, 'dashboard.html')
@@ -22,6 +27,7 @@ def dashboard(request):
 # ============================================================
 # GESTÃO DE OFFSETS (PERSISTÊNCIA NO BANCO DE DADOS)
 # ============================================================
+
 @csrf_exempt
 def salvar_offset(request):
     if request.method != 'POST':
@@ -29,7 +35,10 @@ def salvar_offset(request):
     try:
         data = json.loads(request.body)
         m_id = data.get('motor_id')
+        
         motor_instancia = get_object_or_404(Motor, id=m_id)
+        
+        # O Django gerencia a atualização ou criação no Postgres automaticamente
         obj, created = MotorCalibration.objects.update_or_create(
             motor=motor_instancia,
             defaults={
@@ -38,7 +47,12 @@ def salvar_offset(request):
                 'offset_z': float(data.get('offset_z', 0)),
             }
         )
-        return JsonResponse({'status': 'ok', 'atualizado': not created}, status=200)
+        
+        return JsonResponse({
+            'status': 'ok', 
+            'mensagem': f'Offsets do motor {m_id} persistidos no banco',
+            'atualizado': not created
+        }, status=200)
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
 
@@ -59,9 +73,24 @@ def carregar_offset(request, motor_id):
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
 
+@csrf_exempt
+def listar_offsets(request):
+    try:
+        calibracoes = MotorCalibration.objects.all()
+        offsets = {str(c.motor.id): {
+            'offset_x': c.offset_x,
+            'offset_y': c.offset_y,
+            'offset_z': c.offset_z,
+            'timestamp': c.updated_at.isoformat()
+        } for c in calibracoes}
+        return JsonResponse({'offsets': offsets}, status=200)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
 # ============================================================
-# PROCESSAMENTO DE DADOS VIBRATÓRIOS E STATUS ONLINE
+# PROCESSAMENTO DE DADOS VIBRATÓRIOS
 # ============================================================
+
 @csrf_exempt
 def receber_dados_brutos(request):
     if request.method != 'POST':
@@ -73,9 +102,9 @@ def receber_dados_brutos(request):
         vibX = float(data.get('vibX', 0))
         vibY = float(data.get('vibY', 0))
         vibZ = float(data.get('vibZ', 0))
-
+        
         motor = Motor.objects.filter(id=motor_id).first()
-
+        
         if motor_id not in buffers:
             buffers[motor_id] = {
                 'x': deque(maxlen=BUFFER_SIZE),
@@ -83,17 +112,29 @@ def receber_dados_brutos(request):
                 'z': deque(maxlen=BUFFER_SIZE),
                 'tempo': deque(maxlen=BUFFER_SIZE)
             }
-
+        
         buffers[motor_id]['x'].append(vibX)
         buffers[motor_id]['y'].append(vibY)
         buffers[motor_id]['z'].append(vibZ)
         buffers[motor_id]['tempo'].append(datetime.now().timestamp())
-
+        
+        # Cálculo de RMS de Aceleração (m/s²)
         rms_aceleracao = math.sqrt((vibX**2 + vibY**2 + vibZ**2) / 3)
         pico = max(abs(vibX), abs(vibY), abs(vibZ))
         crest_factor = pico / rms_aceleracao if rms_aceleracao > 0 else 0
+        
+        amostras = [vibX, vibY, vibZ]
+        kurtosis = stats.kurtosis(amostras, fisher=True) if np.std(amostras) > 0 else 0
+        
+        # Cálculo de Velocidade RMS (mm/s) aproximado para severidade ISO
         vel_rms = rms_aceleracao * 9.81 / (2 * math.pi * 60) * 1000
-
+        
+        # Lógica de Severidade
+        if vel_rms < 1.0: severidade, rec = "Boa", "Operação normal"
+        elif vel_rms < 2.8: severidade, rec = "Aceitável", "Monitorar tendência"
+        elif vel_rms < 4.5: severidade, rec = "Insatisfatória", "Planejar manutenção"
+        else: severidade, rec = "Perigosa", "PARAR EQUIPAMENTO IMEDIATAMENTE"
+        
         leitura = Leitura.objects.create(
             motor=motor,
             temperatura=round(temperatura, 1),
@@ -103,25 +144,23 @@ def receber_dados_brutos(request):
             rms=round(rms_aceleracao, 3),
             crest=round(crest_factor, 2)
         )
-
-        return JsonResponse({'status': 'ok', 'id': leitura.id}, status=201)
+        
+        return JsonResponse({
+            'status': 'ok',
+            'id': leitura.id,
+            'calculos': {
+                'aceleracao_rms': round(rms_aceleracao, 3),
+                'velocidade_mm_s': round(vel_rms, 2),
+                'severidade': severidade,
+                'recomendacao': rec,
+                'alerta': vel_rms > 4.5
+            }
+        }, status=201)
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
 
 def dados_json(request):
     motor_id = request.GET.get('motor_id')
-    
-    # 1. Busca a última leitura deste motor
-    ultima_leitura = Leitura.objects.filter(motor_id=motor_id).order_by('-data').first()
-    
-    # 2. Lógica de Status Online (Timeout de 10 segundos)
-    is_online = False
-    if ultima_leitura:
-        agora = timezone.now()
-        if ultima_leitura.data > agora - timedelta(seconds=10):
-            is_online = True
-
-    # 3. Busca histórico para o gráfico
     dados = Leitura.objects.filter(motor_id=motor_id).order_by('-id')[:50] if motor_id else Leitura.objects.all().order_by('-id')[:50]
     
     lista = [{
@@ -133,32 +172,97 @@ def dados_json(request):
         "vibY": float(d.vibY or 0),
         "vibZ": float(d.vibZ or 0)
     } for d in reversed(dados)]
-    
-    # Retorna o status online e a lista de dados
-    return JsonResponse({
-        "status_online": is_online,
-        "leituras": lista
-    }, safe=False)
+    return JsonResponse(lista, safe=False)
 
 # ============================================================
-# ANÁLISE FFT E CRUD DE MOTORES
+# ANÁLISE FFT E SKF COMPLETA
 # ============================================================
+
+def get_analise_completa(request, motor_id):
+    try:
+        if motor_id not in buffers or len(buffers[motor_id]['x']) < BUFFER_SIZE:
+            return JsonResponse({'erro': 'Aguardando mais amostras...'}, status=400)
+        
+        x_data = np.array(buffers[motor_id]['x']) - np.mean(buffers[motor_id]['x'])
+        window = np.hanning(BUFFER_SIZE)
+        x_windowed = x_data * window
+        
+        fs = 10 
+        freq = fftfreq(BUFFER_SIZE, 1/fs)[:BUFFER_SIZE//2]
+        fft_x = np.abs(fft(x_windowed))[:BUFFER_SIZE//2]
+        
+        rms_total = np.sqrt(np.mean(x_data**2))
+        pico = np.max(np.abs(x_data))
+        crest_factor = pico / rms_total if rms_total > 0 else 0
+        kurtosis_val = stats.kurtosis(x_data, fisher=True)
+        vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000
+        
+        # Diagnóstico de Rolamento e Mancal
+        cond_rolamento = "Falha - Inspecionar" if kurtosis_val > 3 else "Normal"
+        cond_mancal = "Desalinhamento Provável" if (np.sum(fft_x) > 50) else "Normal"
+        
+        return JsonResponse({
+            'analise_basica': {
+                'rms_total': round(rms_total, 3),
+                'rms_mm_s': round(vel_rms, 2),
+                'kurtosis': round(kurtosis_val, 3),
+                'crest_factor': round(crest_factor, 2)
+            },
+            'diagnostico': {
+                'condicao_rolamento': cond_rolamento,
+                'condicao_mancal': cond_mancal,
+                'alerta': "ALERTA" if vel_rms > 2.8 else "NORMAL"
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
 def get_fft_data(request, motor_id):
     try:
         if motor_id not in buffers or len(buffers[motor_id]['x']) < BUFFER_SIZE:
             return JsonResponse({'erro': 'Dados insuficientes'}, status=400)
+        
         x_data = np.array(buffers[motor_id]['x']) - np.mean(buffers[motor_id]['x'])
         fft_res = np.abs(fft(x_data * np.hanning(len(x_data))))[:BUFFER_SIZE//2]
         freqs = fftfreq(BUFFER_SIZE, 1/10)[:BUFFER_SIZE//2]
+        
         dados_fft = [{'freq': round(f, 1), 'amp': round(a, 5)} for f, a in zip(freqs, fft_res) if f <= 50]
         return JsonResponse({'fft_data': dados_fft})
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
 
+# ============================================================
+# CRUD DE MOTORES
+# ============================================================
+
 def motores_listar(request):
     motores = Motor.objects.all().order_by('id')
     lista = [{'id': m.id, 'nome': m.nome, 'marca': m.marca, 'rpm': m.rpm, 'cv': m.cv} for m in motores]
     return JsonResponse(lista, safe=False)
+
+@csrf_exempt
+def motor_criar(request):
+    if request.method != 'POST': return JsonResponse({'erro': 'metodo negado'}, status=405)
+    data = json.loads(request.body)
+    motor = Motor.objects.create(
+        id=data.get('id_desejado'),
+        nome=data.get('nome'), 
+        marca=data.get('marca'),
+        rpm=int(data.get('rpm', 0)), 
+        cv=float(data.get('cv', 0)),
+        frequencia=float(data.get('frequencia', 0))
+    )
+    return JsonResponse({'id': motor.id, 'mensagem': 'Criado'}, status=201)
+
+def motor_obter(request, motor_id):
+    m = get_object_or_404(Motor, id=motor_id)
+    return JsonResponse({'id': m.id, 'nome': m.nome, 'marca': m.marca, 'rpm': m.rpm})
+
+@csrf_exempt
+def motor_excluir(request, motor_id):
+    motor = get_object_or_404(Motor, id=motor_id)
+    motor.delete()
+    return JsonResponse({'mensagem': 'Excluido'})
 
 def ultimo_motor(request):
     m = Motor.objects.last()
