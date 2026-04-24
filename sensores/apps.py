@@ -1,21 +1,19 @@
 from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-# ... (restante dos imports do Django que já estavam lá)
+import json
 
-# Esta é a forma correta para o SEU projeto:
-API_KEY_PROTECTED = "259319"
-
-def validar_acesso(request):
-    token = request.headers.get('X-API-KEY')
-    return token == API_KEY_PROTECTED
-
-@app.route('/api/receber_bruto/', methods=['POST'])
-def receber_bruto():
-    # Verifica a chave enviada pelo ESP32
-    if request.headers.get('X-API-KEY') != API_KEY:
-        return jsonify({"error": "Chave invalida"}), 403
-    
-    dados = request.get_json()
-    # Lógica para salvar no Postgres...
-    return jsonify({"message": "Dados recebidos"}), 201
+@csrf_exempt  # Necessário para permitir que o ESP32 envie dados sem erro de segurança CSRF
+def receber_bruto(request):
+    if request.method == 'POST':
+        try:
+            # Pega os dados enviados (JSON)
+            dados = json.loads(request.body)
+            
+            # --- SUA LÓGICA PARA SALVAR NO POSTGRES AQUI ---
+            # Exemplo: RegistroVibracao.objects.create(valor=dados['valor'])
+            
+            return JsonResponse({"message": "Dados recebidos"}, status=201)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+            
+    return JsonResponse({"error": "Metodo nao permitido"}, status=405)
