@@ -26,7 +26,7 @@ urlpatterns = [
     path('api/motores/<int:motor_id>/', views.motor_obter, name='motor_obter'),
     # Note: motor_atualizar deve estar no seu views.py se for usar. 
     # Caso dê erro de atributo, comente a linha abaixo.
-    # path('api/motores/<int:motor_id>/atualizar/', views.motor_atualizar, name='motor_atualizar'),
+    path('api/motores/<int:motor_id>/atualizar/', views.motor_atualizar, name='motor_atualizar'),
     path('api/motores/<int:motor_id>/excluir/', views.motor_excluir, name='motor_excluir'),
     path('api/ultimo_motor/', views.ultimo_motor, name='ultimo_motor'),
 ]

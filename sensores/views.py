@@ -268,3 +268,25 @@ def ultimo_motor(request):
     m = Motor.objects.last()
     if not m: return JsonResponse({'erro': 'vazio'}, status=404)
     return JsonResponse({'id': m.id, 'nome': m.nome})
+@csrf_exempt
+def motor_atualizar(request, motor_id):
+    if request.method != 'PUT':
+        return JsonResponse({'erro': 'Método inválido'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+
+        motor = get_object_or_404(Motor, id=motor_id)
+
+        motor.nome = data.get('nome', motor.nome)
+        motor.marca = data.get('marca', motor.marca)
+        motor.rpm = int(data.get('rpm', motor.rpm))
+        motor.cv = float(data.get('cv', motor.cv))
+        motor.frequencia = float(data.get('frequencia', motor.frequencia))
+
+        motor.save()
+
+        return JsonResponse({'status': 'ok', 'mensagem': 'Motor atualizado'})
+
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
