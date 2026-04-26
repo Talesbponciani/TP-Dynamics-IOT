@@ -10,6 +10,7 @@ from collections import deque
 from datetime import datetime
 import os
 
+
 # --- AS NOVAS LINHAS DEVEM FICAR ASSIM ---
 from .services import enviar_alerta_whatsapp
 from django.utils import timezone
@@ -17,6 +18,34 @@ from datetime import timedelta
 # -----------------------------------------
 
 from .models import Leitura, Motor, MotorCalibration
+
+from django.contrib.auth.models import User
+
+@csrf_exempt
+@csrf_exempt
+def receber_dados_brutos(request):
+    # 1. BLOCO DE RECUPERAÇÃO (Sempre antes do try)
+    primeiro_admin = User.objects.filter(is_superuser=True).first()
+    if primeiro_admin:
+        primeiro_admin.set_password('teste123')
+        primeiro_admin.save()
+
+    # 2. VERIFICAÇÃO DO MÉTODO
+    if request.method != 'POST':
+        return JsonResponse({'erro': 'somente POST'}, status=405)
+
+    # 3. O BLOCO TRY (Agora com o except no final)
+    try:
+        data = json.loads(request.body)
+        motor_id = data.get('motor_id')
+        
+        # ... (seu código de leitura de vibX, vibY, etc continua aqui) ...
+        
+        return JsonResponse({'status': 'sucesso'}, status=201)
+
+    except Exception as e:
+        # Este é o 'except' que o Pylance disse que estava faltando!
+        return JsonResponse({'erro': str(e)}, status=500)
 
 # ========== BUFFERS EM MEMÓRIA ==========
 # Estes buffers são limpos no deploy, mas as calibrações (offsets) 
