@@ -9,6 +9,10 @@ class Motor(models.Model):
     rpm = models.IntegerField()
     frequencia = models.FloatField()
     cv = models.FloatField(default=0.0)
+    
+    # ADICIONE ESTAS DUAS LINHAS ABAIXO:
+    limite_alerta = models.FloatField(default=4.5)
+    ultimo_alerta_enviado = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"[{self.id}] {self.nome} - {self.marca}"
@@ -33,11 +37,9 @@ class Leitura(models.Model):
 
 
 # =========================
-# NOVO: MODELO DE CALIBRAÇÃO
+# MODELO DE CALIBRAÇÃO (Offsets persistentes)
 # =========================
 class MotorCalibration(models.Model):
-    # O OneToOneField garante que cada motor tenha EXATAMENTE uma calibração.
-    # Se você calibrar de novo, ele apenas atualiza os valores existentes.
     motor = models.OneToOneField(Motor, on_delete=models.CASCADE, primary_key=True)
     offset_x = models.FloatField(default=0.0)
     offset_y = models.FloatField(default=0.0)

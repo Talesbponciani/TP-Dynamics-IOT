@@ -10,6 +10,12 @@ from collections import deque
 from datetime import datetime
 import os
 
+# --- AS NOVAS LINHAS DEVEM FICAR ASSIM ---
+from .services import enviar_alerta_whatsapp
+from django.utils import timezone
+from datetime import timedelta
+# -----------------------------------------
+
 from .models import Leitura, Motor, MotorCalibration
 
 # ========== BUFFERS EM MEMÓRIA ==========
@@ -128,6 +134,20 @@ def receber_dados_brutos(request):
         
         # Cálculo de Velocidade RMS (mm/s) aproximado para severidade ISO
         vel_rms = rms_aceleracao * 9.81 / (2 * math.pi * 60) * 1000
+        # --- Lógica do WhatsApp ---
+        limite_configurado = motor.limite_alerta
+
+        if vel_rms > limite_configurado:
+            agora = timezone.now()
+            # Só envia se for o primeiro alerta ou se passou 30 min do último
+            if not motor.ultimo_alerta_enviado or agora > motor.ultimo_alerta_enviado + timedelta(minutes=30):
+                
+                status_alerta = f"CRÍTICO (Limite: {limite_configurado} mm/s)"
+                enviar_alerta_whatsapp(motor.nome, round(vel_rms, 2), status_alerta)
+                
+                # Salva o horário para a trava de segurança funcionar
+                motor.ultimo_alerta_enviado = agora
+                motor.save()
         
         # Lógica de Severidade
         if vel_rms < 1.0: severidade, rec = "Boa", "Operação normal"
