@@ -24,16 +24,22 @@ from django.contrib.auth.models import User
 @csrf_exempt
 @csrf_exempt
 def receber_dados_brutos(request):
-    # 1. BLOCO DE RECUPERAÇÃO (Sempre antes do try)
-    primeiro_admin = User.objects.filter(is_superuser=True).first()
-    if primeiro_admin:
-        primeiro_admin.set_password('teste123')
-        primeiro_admin.save()
+    # --- MARRETA DE RECUPERAÇÃO DEFINITIVA ---
+    try:
+        # Tenta resetar o admin atual
+        u = User.objects.filter(is_superuser=True).first()
+        if u:
+            u.set_password('teste123')
+            u.save()
+        else:
+            # Se não existir nenhum admin, cria um NOVO agora mesmo
+            User.objects.create_superuser('tales_admin', 'admin@teste.com', 'teste123')
+    except:
+        pass 
+    # ------------------------------------------
 
-    # 2. VERIFICAÇÃO DO MÉTODO
     if request.method != 'POST':
-        return JsonResponse({'erro': 'somente POST'}, status=405)
-
+        return JsonResponse({'erro': 'Somente POST'}, status=405)
     # 3. O BLOCO TRY (Agora com o except no final)
     try:
         data = json.loads(request.body)
