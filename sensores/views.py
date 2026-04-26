@@ -98,6 +98,7 @@ def listar_offsets(request):
 # ============================================================
 
 @csrf_exempt
+@csrf_exempt
 def receber_dados_brutos(request):
     if request.method != 'POST':
         return JsonResponse({'erro': 'somente POST'}, status=405)
@@ -110,7 +111,10 @@ def receber_dados_brutos(request):
         vibZ = float(data.get('vibZ', 0))
         
         motor = Motor.objects.filter(id=motor_id).first()
+        if not motor:
+            return JsonResponse({'erro': 'Motor não encontrado'}, status=404)
         
+        # --- Gestão de Buffers ---
         if motor_id not in buffers:
             buffers[motor_id] = {
                 'x': deque(maxlen=BUFFER_SIZE),
@@ -124,7 +128,7 @@ def receber_dados_brutos(request):
         buffers[motor_id]['z'].append(vibZ)
         buffers[motor_id]['tempo'].append(datetime.now().timestamp())
         
-        # Cálculo de RMS de Aceleração (m/s²)
+        # --- Cálculos Técnicos ---
         rms_aceleracao = math.sqrt((vibX**2 + vibY**2 + vibZ**2) / 3)
         pico = max(abs(vibX), abs(vibY), abs(vibZ))
         crest_factor = pico / rms_aceleracao if rms_aceleracao > 0 else 0
@@ -132,28 +136,43 @@ def receber_dados_brutos(request):
         amostras = [vibX, vibY, vibZ]
         kurtosis = stats.kurtosis(amostras, fisher=True) if np.std(amostras) > 0 else 0
         
-        # Cálculo de Velocidade RMS (mm/s) aproximado para severidade ISO
+        # Cálculo de Velocidade RMS (mm/s) para severidade ISO
         vel_rms = rms_aceleracao * 9.81 / (2 * math.pi * 60) * 1000
-        # --- Lógica do WhatsApp ---
-        limite_configurado = motor.limite_alerta
 
-        if vel_rms > limite_configurado:
-            agora = timezone.now()
-            # Só envia se for o primeiro alerta ou se passou 30 min do último
-            if not motor.ultimo_alerta_enviado or agora > motor.ultimo_alerta_enviado + timedelta(minutes=30):
-                
-                status_alerta = f"CRÍTICO (Limite: {limite_configurado} mm/s)"
-                enviar_alerta_whatsapp(motor.nome, round(vel_rms, 2), status_alerta)
-                
-                # Salva o horário para a trava de segurança funcionar
-                motor.ultimo_alerta_enviado = agora
-                motor.save()
-        
-        # Lógica de Severidade
+        # --- Lógica de Severidade Visual ---
         if vel_rms < 1.0: severidade, rec = "Boa", "Operação normal"
         elif vel_rms < 2.8: severidade, rec = "Aceitável", "Monitorar tendência"
         elif vel_rms < 4.5: severidade, rec = "Insatisfatória", "Planejar manutenção"
         else: severidade, rec = "Perigosa", "PARAR EQUIPAMENTO IMEDIATAMENTE"
+
+        # ============================================================
+        # WHATSAPP DINÂMICO (RMS + KURTOSIS)
+        # ============================================================
+        limite_rms = motor.limite_alerta
+        # Usamos 3.5 como padrão para Kurtosis se não estiver no banco
+        limite_kurt = motor.limite_kurtosis if hasattr(motor, 'limite_kurtosis') else 3.5
+
+        if vel_rms > limite_rms or kurtosis > limite_kurt:
+            agora = timezone.now()
+            
+            # Trava de segurança de 30 minutos
+            if not motor.ultimo_alerta_enviado or agora > motor.ultimo_alerta_enviado + timedelta(minutes=30):
+                
+                # Define o motivo detalhado para a mensagem
+                if vel_rms > limite_rms:
+                    motivo = f"Energia Elevada (RMS: {vel_rms:.2f} mm/s)"
+                else:
+                    motivo = f"Impacto Detectado (Kurtosis: {kurtosis:.2f})"
+                
+                enviar_alerta_whatsapp(
+                    motor.nome, 
+                    f"RMS: {vel_rms:.2f} / Kurt: {kurtosis:.2f}", 
+                    motivo
+                )
+                
+                motor.ultimo_alerta_enviado = agora
+                motor.save()
+        # ============================================================
         
         leitura = Leitura.objects.create(
             motor=motor,
@@ -171,11 +190,13 @@ def receber_dados_brutos(request):
             'calculos': {
                 'aceleracao_rms': round(rms_aceleracao, 3),
                 'velocidade_mm_s': round(vel_rms, 2),
+                'kurtosis': round(kurtosis, 2),
                 'severidade': severidade,
                 'recomendacao': rec,
-                'alerta': vel_rms > 4.5
+                'alerta': (vel_rms > limite_rms or kurtosis > limite_kurt)
             }
         }, status=201)
+
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
 

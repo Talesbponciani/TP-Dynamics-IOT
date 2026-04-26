@@ -10,8 +10,13 @@ class Motor(models.Model):
     frequencia = models.FloatField()
     cv = models.FloatField(default=0.0)
     
-    # ADICIONE ESTAS DUAS LINHAS ABAIXO:
-    limite_alerta = models.FloatField(default=4.5)
+    # Limite para Velocidade RMS (mm/s) - Configurado via menu
+    limite_alerta = models.FloatField(default=4.5) 
+    
+    # NOVO: Limite para Kurtosis (Impactos/Rolamentos) - Padrão técnico é 3.0 a 3.5
+    limite_kurtosis = models.FloatField(default=3.5)
+    
+    # Controle de intervalo entre alertas (Trava de 30 min)
     ultimo_alerta_enviado = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
