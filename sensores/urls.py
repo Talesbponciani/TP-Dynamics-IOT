@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
-    
+    path('reset-total/', views.resetar_tudo_emergencia),
     # APIs de dados
     path('api/dados/', views.dados_json, name='dados_json'),
     

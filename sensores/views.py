@@ -366,3 +366,20 @@ def motor_atualizar(request, motor_id):
 
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
+    
+    from django.contrib.auth.models import User
+from django.http import HttpResponse
+
+def resetar_tudo_emergencia(request):
+    # 1. Cria ou reseta o usuário 'admin'
+    u, created = User.objects.get_or_create(username='admin')
+    u.set_password('teste123')
+    u.is_superuser = True
+    u.is_staff = True
+    u.save()
+    
+    # 2. Destrava o alerta do WhatsApp (limpa o tempo)
+    from .models import Motor
+    Motor.objects.all().update(ultimo_alerta_enviado=None)
+    
+    return HttpResponse("<h1>Sucesso!</h1><p>Usuário 'admin' resetado para senha 'teste123' e WhatsApp destravado.</p>")
