@@ -527,3 +527,60 @@ def resetar_tudo_emergencia(request):
     Motor.objects.all().update(ultimo_alerta_enviado=None)
     
     return HttpResponse("<h1>Sucesso!</h1><p>Usuário 'admin' resetado para senha 'teste123' e WhatsApp destravado.</p>")
+
+import csv
+from django.http import HttpResponse
+from .models import LeituraSensor  # Nome correto conforme seu projeto
+from django.utils import timezone
+
+from datetime import datetime
+from django.utils import timezone
+import csv
+from django.http import HttpResponse
+from .models import LeituraSensor
+
+def exportar_dados_csv(request):
+    # 1. Captura o ID do motor e as datas de filtro
+    motor_id = request.GET.get('motor_id')
+    data_inicio = request.GET.get('inicio') # Espera formato YYYY-MM-DD
+    data_fim = request.GET.get('fim')       # Espera formato YYYY-MM-DD
+    
+    # 2. Configura a resposta para download de arquivo
+    response = HttpResponse(content_type='text/csv')
+    filename = f"historico_motor_{motor_id}_{timezone.now().strftime('%d-%m-%Y')}.csv"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    # Adicionamos delimiter=';' para o Excel brasileiro abrir em colunas certinho
+    writer = csv.writer(response, delimiter=';')
+    
+    # 3. Cabeçalhos
+    writer.writerow(['Data/Hora', 'Temperatura', 'RMS', 'VibX', 'VibY', 'VibZ', 'Crest Factor', 'Kurtosis'])
+
+    # 4. Busca os dados filtrando pelo motor_id
+    if motor_id:
+        leituras = LeituraSensor.objects.filter(motor_id=motor_id)
+    else:
+        leituras = LeituraSensor.objects.all()
+
+    # --- NOVO: Lógica de Filtro por Data ---
+    if data_inicio and data_fim:
+        # Filtra o intervalo de datas (inclusivo)
+        leituras = leituras.filter(data_hora__date__range=[data_inicio, data_fim])
+    
+    # Ordena do mais recente para o mais antigo
+    leituras = leituras.order_by('-data_hora')
+
+    # 5. Preenche o CSV com os dados do banco
+    for item in leituras:
+        writer.writerow([
+            item.data_hora.strftime('%d/%m/%Y %H:%M:%S'),
+            str(item.temperatura).replace('.', ','), # Troca ponto por vírgula para o Excel
+            str(item.rms).replace('.', ','),
+            str(item.vib_x).replace('.', ','),
+            str(item.vib_y).replace('.', ','),
+            str(item.vib_z).replace('.', ','),
+            str(item.crest_factor).replace('.', ','),
+            str(item.kurtosis).replace('.', ',')
+        ])
+
+    return response

@@ -2240,6 +2240,78 @@
             document.getElementById(id)?.addEventListener('click', (e) => { e.preventDefault(); fn(); document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show')); });
         });
     }
+
+    // Exemplo de como capturar o ID do motor selecionado no seu sistema
+document.getElementById('menuExport').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // Supondo que você tenha uma variável que guarda o ID do motor ativo
+    const motorId = document.getElementById('historicoMotorSelect')?.value || 1; 
+    
+    // Redireciona para a rota de exportação do seu backend
+    window.location.href = `/exportar-dados?motor_id=${motorId}`;
+});
+
+function dispararDownload(e) {
+    e.preventDefault();
+
+    // No seu sistema, o ID do motor geralmente vem do seletor de histórico 
+    // ou do perfil do motor logado. Vamos tentar capturar do seletor principal:
+    const motorSelect = document.getElementById('historicoMotorSelect') || 
+                        document.getElementById('newChartMotor') ||
+                        { value: "1" }; // Default caso não ache
+
+    const motorId = motorSelect.value || "1";
+
+    // DEBUG: Remova o comentário abaixo se quiser ver no console se ele está pegando o ID
+    // console.log("Exportando dados do motor ID:", motorId);
+
+    // Redireciona para a rota que criamos no Django
+    // Importante: verifique se a URL no urls.py é exatamente /exportar-dados/
+    window.location.href = `/exportar-dados/?motor_id=${motorId}`;
+}
+
+// Vincula a função a todos os botões de exportar (Menu 1, 2 e 3)
+document.addEventListener('DOMContentLoaded', function() {
+    const idsExport = ['menuExport', 'menuExport2', 'menuExport3'];
+    
+    idsExport.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', dispararDownload);
+        }
+    });
+});
+
+function dispararDownload(e) {
+        e.preventDefault();
+
+        const motorSelect = document.getElementById('historicoMotorSelect');
+        const motorId = (motorSelect && motorSelect.value) ? motorSelect.value : "1";
+        const dataFiltro = document.getElementById('historicoDataSelect')?.value;
+
+        let url = `/exportar-dados/?motor_id=${motorId}`;
+        
+        if (dataFiltro) {
+            url += `&inicio=${dataFiltro}&fim=${dataFiltro}`;
+        }
+
+        console.log("Chamando URL de exportação:", url);
+        window.location.href = url;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const botoesExportar = ['menuExport', 'menuExport2', 'menuExport3'];
+        
+        botoesExportar.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                // Aqui garantimos que o clique chame a nossa função
+                btn.onclick = dispararDownload;
+            }
+        });
+    });
+    
 </script>
 </body>
 </html>
