@@ -541,33 +541,42 @@ def exportar_dados_csv(request):
         motor_id = request.GET.get('motor_id')
         vinte_quatro_horas_atras = timezone.now() - timedelta(hours=24)
         
-        response = HttpResponse(content_type='text/csv; charset=utf-8-sig') # Adicionado o sig para o Excel ler acentos
-        filename = f"grafico_24h_motor_{motor_id}.csv"
+        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+        filename = f"grafico_24h_agrupado_motor_{motor_id}.csv"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
-        # O segredo da organização: delimiter=';'
-        writer = csv.writer(response, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+        writer = csv.writer(response, delimiter=';')
         
-        # Cabeçalhos bem definidos
-        writer.writerow(['Data e Hora', 'Temperatura (°C)', 'RMS (m/s²)', 'VibX', 'VibY', 'VibZ'])
-
-        # Busca os dados filtrados
+        # Busca os dados uma única vez para economizar banco de dados
         leituras = Leitura.objects.filter(
             motor_id=motor_id,
             data__gte=vinte_quatro_horas_atras
-        ).order_by('-data')
+        ).order_by('data') # Ordem cronológica (do mais antigo para o novo)
 
+        # --- BLOCO 1: TEMPERATURA ---
+        writer.writerow(['--- LEITURAS DE TEMPERATURA ---'])
+        writer.writerow(['Data e Hora', 'Valor', 'Unidade'])
         for item in leituras:
-            # Formatamos os números para usar vírgula como decimal (Padrão PT-BR)
-            writer.writerow([
-                item.data.strftime('%d/%m/%Y %H:%M:%S') if not isinstance(item.data, str) else item.data,
-                str(item.temperatura).replace('.', ','),
-                str(item.rms).replace('.', ','),
-                str(item.vibX).replace('.', ','),
-                str(item.vibY).replace('.', ','),
-                str(item.vibZ).replace('.', ',')
-            ])
+            writer.writerow([item.data.strftime('%d/%m/%Y %H:%M:%S'), str(item.temperatura).replace('.', ','), '°C'])
+        
+        writer.writerow([]) # Linha em branco para separar
+
+        # --- BLOCO 2: RMS ---
+        writer.writerow(['--- LEITURAS DE RMS ---'])
+        writer.writerow(['Data e Hora', 'Valor', 'Unidade'])
+        for item in leituras:
+            writer.writerow([item.data.strftime('%d/%m/%Y %H:%M:%S'), str(item.rms).replace('.', ','), 'm/s²'])
+
+        writer.writerow([]) # Linha em branco
+
+        # --- BLOCO 3: VIBRAÇÃO X ---
+        writer.writerow(['--- LEITURAS DE VIBRAÇÃO X ---'])
+        writer.writerow(['Data e Hora', 'Valor', 'Unidade'])
+        for item in leituras:
+            writer.writerow([item.data.strftime('%d/%m/%Y %H:%M:%S'), str(item.vibX).replace('.', ','), 'g'])
+
+        # Repita o padrão para Y e Z se desejar...
 
         return response
     except Exception as e:
-        return HttpResponse(f"Erro na organização: {e}", status=500)
+        return HttpResponse(f"Erro na organização vertical: {e}", status=500)
