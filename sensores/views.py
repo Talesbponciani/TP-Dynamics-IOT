@@ -529,48 +529,44 @@ def resetar_tudo_emergencia(request):
     
     return HttpResponse("<h1>Sucesso!</h1><p>Usuário 'admin' resetado para senha 'teste123' e WhatsApp destravado.</p>")
 
-import csv
+
+import csv  # <--- ESSA LINHA ESTÁ FALTANDO!
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse # HttpResponse é obrigatório aqui
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from datetime import datetime
-from .models import Leitura, Motor # Verifique se o nome é Leitura ou LeituraSensor
+from .models import Leitura, Motor
 
 def exportar_dados_csv(request):
     try:
-        # 1. Captura o ID do motor
         motor_id = request.GET.get('motor_id')
         
-        # 2. Configura a resposta para download de arquivo
         response = HttpResponse(content_type='text/csv')
         filename = f"historico_motor_{motor_id}_{timezone.now().strftime('%d-%m-%Y')}.csv"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
-        # Delimitador ';' para o Excel brasileiro
         writer = csv.writer(response, delimiter=';')
-        
-        # 3. Cabeçalhos
-        writer.writerow(['Data/Hora', 'Temperatura', 'RMS', 'VibX', 'VibY', 'VibZ'])
+        writer.writerow(['Data', 'Temperatura', 'RMS', 'VibX', 'VibY', 'VibZ', 'Crest'])
 
-        # 4. Busca os dados (filtra por motor se o ID existir)
+        # Filtro base
         if motor_id:
-            leituras = Leitura.objects.filter(motor_id=motor_id).order_by('-data_hora')
+            # AJUSTE: Usando 'data' em vez de 'data_hora'
+            leituras = Leitura.objects.filter(motor_id=motor_id).order_by('-data')
         else:
-            leituras = Leitura.objects.all().order_by('-data_hora')
+            leituras = Leitura.objects.all().order_by('-data')
 
-        # 5. Preenche o CSV
         for item in leituras:
             writer.writerow([
-                item.data_hora.strftime('%d/%m/%Y %H:%M:%S'),
+                # AJUSTE: Verifique se o campo 'data' precisa de strftime ou se já é string
+                item.data if isinstance(item.data, str) else item.data.strftime('%d/%m/%Y %H:%M:%S'),
                 str(item.temperatura).replace('.', ','),
                 str(item.rms).replace('.', ','),
-                str(item.vib_x).replace('.', ','),
-                str(item.vib_y).replace('.', ','),
-                str(item.vib_z).replace('.', ',')
+                str(item.vibX).replace('.', ','), # AJUSTE: vibX (com X maiúsculo)
+                str(item.vibY).replace('.', ','), # AJUSTE: vibY (com Y maiúsculo)
+                str(item.vibZ).replace('.', ','), # AJUSTE: vibZ (com Z maiúsculo)
+                str(item.crest).replace('.', ',') # AJUSTE: campo crest
             ])
 
         return response
     except Exception as e:
-        # Se der erro, ele vai imprimir no terminal do servidor para você ver
-        print(f"Erro na exportação: {e}")
         return HttpResponse(f"Erro interno: {e}", status=500)
