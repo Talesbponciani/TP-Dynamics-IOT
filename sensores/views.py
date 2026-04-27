@@ -331,7 +331,6 @@ def dados_brutos_json(request):
 # ============================================================
 # ANÁLISE FFT E SKF COMPLETA
 # ============================================================
-
 def get_analise_completa(request, motor_id):
     try:
         if motor_id not in buffers or len(buffers[motor_id]['x']) < BUFFER_SIZE:
@@ -345,13 +344,16 @@ def get_analise_completa(request, motor_id):
         freq = fftfreq(BUFFER_SIZE, 1/fs)[:BUFFER_SIZE//2]
         fft_x = np.abs(fft(x_windowed))[:BUFFER_SIZE//2]
         
+        # --- NOVO: CÁLCULO DA FREQUÊNCIA DOMINANTE ---
+        idx_max = np.argmax(fft_x) # Encontra o índice do maior pico
+        freq_dominante = freq[idx_max] # Mapeia para a frequência correspondente
+        
         rms_total = np.sqrt(np.mean(x_data**2))
         pico = np.max(np.abs(x_data))
         crest_factor = pico / rms_total if rms_total > 0 else 0
         kurtosis_val = stats.kurtosis(x_data, fisher=True)
         vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000
         
-        # Diagnóstico de Rolamento e Mancal
         cond_rolamento = "Falha - Inspecionar" if kurtosis_val > 3 else "Normal"
         cond_mancal = "Desalinhamento Provável" if (np.sum(fft_x) > 50) else "Normal"
         
@@ -360,7 +362,8 @@ def get_analise_completa(request, motor_id):
                 'rms_total': round(rms_total, 3),
                 'rms_mm_s': round(vel_rms, 2),
                 'kurtosis': round(kurtosis_val, 3),
-                'crest_factor': round(crest_factor, 2)
+                'crest_factor': round(crest_factor, 2),
+                'freq_dominante': round(float(freq_dominante), 1) # <--- ENVIANDO PARA O FRONT
             },
             'diagnostico': {
                 'condicao_rolamento': cond_rolamento,
@@ -370,25 +373,6 @@ def get_analise_completa(request, motor_id):
         })
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
-
-def get_fft_data(request, motor_id):
-    try:
-        if str(motor_id) not in buffers or len(buffers[str(motor_id)]['x']) < BUFFER_SIZE:
-            return JsonResponse({'labels': [], 'datasets': []}) # Retorna vazio em vez de erro 400
-
-        x_data = np.array(buffers[str(motor_id)]['x']) - np.mean(buffers[str(motor_id)]['x'])
-        # Cálculo da FFT
-        fft_res = np.abs(fft(x_data * np.hanning(BUFFER_SIZE)))[:BUFFER_SIZE//2]
-        freqs = fftfreq(BUFFER_SIZE, 1/10)[:BUFFER_SIZE//2]
-
-        # Enviando como listas simples para o JavaScript ler direto
-        return JsonResponse({
-            'labels': [round(f, 1) for f in freqs],
-            'amplitudes': [round(a, 5) for a in fft_res]
-        })
-    except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
-
 # ============================================================
 # CRUD DE MOTORES
 # ============================================================
