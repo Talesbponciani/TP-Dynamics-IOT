@@ -531,7 +531,7 @@ def resetar_tudo_emergencia(request):
 
 import csv
 from django.http import HttpResponse
-from .models import LeituraSensor  # Nome correto conforme seu projeto
+from .models import Leitura  # Nome correto conforme seu projeto
 from django.utils import timezone
 
 from datetime import datetime
@@ -542,21 +542,29 @@ from django.http import HttpResponse
 from .models import Leitura, Motor  # Ajustado para o nome real do seu modelo
 
 def exportar_dados_csv(request):
+    # 1. Captura o ID do motor
     motor_id = request.GET.get('motor_id')
     
+    # 2. Configura a resposta para download de arquivo
     response = HttpResponse(content_type='text/csv')
-    filename = f"historico_motor_{motor_id}_{timezone.now().strftime('%d-%m-%Y')}.csv"
+    # Nome do arquivo com data atual
+    data_str = timezone.now().strftime('%d-%m-%Y')
+    filename = f"historico_motor_{motor_id}_{data_str}.csv"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
+    # Delimitador ';' para o Excel brasileiro abrir em colunas automaticamente
     writer = csv.writer(response, delimiter=';')
+    
+    # 3. Cabeçalhos
     writer.writerow(['Data/Hora', 'Temperatura', 'RMS', 'VibX', 'VibY', 'VibZ'])
 
-    # USANDO O NOME CORRETO: Leitura
+    # 4. Busca os dados usando o modelo correto 'Leitura'
     if motor_id:
         leituras = Leitura.objects.filter(motor_id=motor_id).order_by('-data_hora')
     else:
         leituras = Leitura.objects.all().order_by('-data_hora')
 
+    # 5. Preenche o CSV convertendo pontos para vírgulas (padrão Brasil)
     for item in leituras:
         writer.writerow([
             item.data_hora.strftime('%d/%m/%Y %H:%M:%S'),
