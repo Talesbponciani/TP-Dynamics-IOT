@@ -30,3 +30,5 @@ urlpatterns = [
     path('api/motores/<int:motor_id>/excluir/', views.motor_excluir, name='motor_excluir'),
     path('api/ultimo_motor/', views.ultimo_motor, name='ultimo_motor'),
 ]
+
+path('api/dados_brutos/', views.dados_brutos_json, name='dados_brutos'),

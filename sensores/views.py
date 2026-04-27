@@ -9,7 +9,8 @@ from scipy import stats
 from collections import deque
 from datetime import datetime
 import os
-
+from django.db.models import Avg, Count, Max, Min
+from django.db.models.functions import TruncHour
 
 # --- AS NOVAS LINHAS DEVEM FICAR ASSIM ---
 from .services import enviar_alerta_whatsapp
@@ -236,11 +237,63 @@ def receber_dados_brutos(request):
         return JsonResponse({'erro': str(e)}, status=500)
 
 def dados_json(request):
+    """
+    Retorna dados agrupados por HORA para o gráfico.
+    - Mantém dados brutos no banco (não perde informação)
+    - Exibe médias por hora na interface
+    """
     motor_id = request.GET.get('motor_id')
-    dados = Leitura.objects.filter(motor_id=motor_id).order_by('-id')[:50] if motor_id else Leitura.objects.all().order_by('-id')[:50]
+    
+    # Filtra pelo motor, se fornecido
+    queryset = Leitura.objects.filter(motor_id=motor_id) if motor_id else Leitura.objects.all()
+    
+    # Agrupa por hora e calcula estatísticas
+    dados_agrupados = queryset.annotate(
+        hora=TruncHour('data')
+    ).values('hora').annotate(
+        # Médias principais
+        temperatura_media=Avg('temperatura'),
+        rms_medio=Avg('rms'),
+        vibX_medio=Avg('vibX'),
+        vibY_medio=Avg('vibY'),
+        vibZ_medio=Avg('vibZ'),
+        
+        # Estatísticas úteis (opcionais, para tooltips)
+        temperatura_max=Max('temperatura'),
+        temperatura_min=Min('temperatura'),
+        total_leituras=Count('id')
+    ).order_by('-hora')[:168]  # 168 = últimas 168 horas (7 dias)
+    
+    # Formata para o front-end
+    lista = []
+    for item in reversed(dados_agrupados):  # ordem crescente (mais antigo primeiro)
+        lista.append({
+            "data": item['hora'].strftime("%d/%m %H:00") if item['hora'] else "",
+            "data_iso": item['hora'].isoformat() if item['hora'] else "",  # para ordenação JS
+            "motor_id": int(motor_id) if motor_id else None,
+            "temperatura": round(float(item['temperatura_media'] or 0), 1),
+            "temperatura_max": round(float(item['temperatura_max'] or 0), 1),
+            "temperatura_min": round(float(item['temperatura_min'] or 0), 1),
+            "rms": round(float(item['rms_medio'] or 0), 3),
+            "vibX": round(float(item['vibX_medio'] or 0), 3),
+            "vibY": round(float(item['vibY_medio'] or 0), 3),
+            "vibZ": round(float(item['vibZ_medio'] or 0), 3),
+            "leituras_hora": item['total_leituras']
+        })
+    
+    return JsonResponse(lista, safe=False)
+
+def dados_brutos_json(request):
+    """
+    Retorna dados BRUTOS (últimas 100 leituras) para diagnóstico.
+    Use em uma rota separada: /api/dados_brutos/
+    """
+    motor_id = request.GET.get('motor_id')
+    dados = Leitura.objects.filter(motor_id=motor_id).order_by('-id')[:100] if motor_id else Leitura.objects.all().order_by('-id')[:100]
     
     lista = [{
         "data": d.data.strftime("%H:%M:%S") if d.data else "",
+        "data_completa": d.data.isoformat(),
         "motor_id": d.motor.id if d.motor else None,
         "temperatura": float(d.temperatura or 0),
         "rms": float(d.rms or 0),
