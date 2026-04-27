@@ -530,43 +530,44 @@ def resetar_tudo_emergencia(request):
     return HttpResponse("<h1>Sucesso!</h1><p>Usuário 'admin' resetado para senha 'teste123' e WhatsApp destravado.</p>")
 
 
-import csv  # <--- ESSA LINHA ESTÁ FALTANDO!
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
+import csv
+from django.http import HttpResponse
 from django.utils import timezone
-from datetime import datetime
-from .models import Leitura, Motor
+from datetime import timedelta
+from .models import Leitura
 
 def exportar_dados_csv(request):
     try:
         motor_id = request.GET.get('motor_id')
+        vinte_quatro_horas_atras = timezone.now() - timedelta(hours=24)
         
-        response = HttpResponse(content_type='text/csv')
-        filename = f"historico_motor_{motor_id}_{timezone.now().strftime('%d-%m-%Y')}.csv"
+        response = HttpResponse(content_type='text/csv; charset=utf-8-sig') # Adicionado o sig para o Excel ler acentos
+        filename = f"grafico_24h_motor_{motor_id}.csv"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
-        writer = csv.writer(response, delimiter=';')
-        writer.writerow(['Data', 'Temperatura', 'RMS', 'VibX', 'VibY', 'VibZ', 'Crest'])
+        # O segredo da organização: delimiter=';'
+        writer = csv.writer(response, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+        
+        # Cabeçalhos bem definidos
+        writer.writerow(['Data e Hora', 'Temperatura (°C)', 'RMS (m/s²)', 'VibX', 'VibY', 'VibZ'])
 
-        # Filtro base
-        if motor_id:
-            # AJUSTE: Usando 'data' em vez de 'data_hora'
-            leituras = Leitura.objects.filter(motor_id=motor_id).order_by('-data')
-        else:
-            leituras = Leitura.objects.all().order_by('-data')
+        # Busca os dados filtrados
+        leituras = Leitura.objects.filter(
+            motor_id=motor_id,
+            data__gte=vinte_quatro_horas_atras
+        ).order_by('-data')
 
         for item in leituras:
+            # Formatamos os números para usar vírgula como decimal (Padrão PT-BR)
             writer.writerow([
-                # AJUSTE: Verifique se o campo 'data' precisa de strftime ou se já é string
-                item.data if isinstance(item.data, str) else item.data.strftime('%d/%m/%Y %H:%M:%S'),
+                item.data.strftime('%d/%m/%Y %H:%M:%S') if not isinstance(item.data, str) else item.data,
                 str(item.temperatura).replace('.', ','),
                 str(item.rms).replace('.', ','),
-                str(item.vibX).replace('.', ','), # AJUSTE: vibX (com X maiúsculo)
-                str(item.vibY).replace('.', ','), # AJUSTE: vibY (com Y maiúsculo)
-                str(item.vibZ).replace('.', ','), # AJUSTE: vibZ (com Z maiúsculo)
-                str(item.crest).replace('.', ',') # AJUSTE: campo crest
+                str(item.vibX).replace('.', ','),
+                str(item.vibY).replace('.', ','),
+                str(item.vibZ).replace('.', ',')
             ])
 
         return response
     except Exception as e:
-        return HttpResponse(f"Erro interno: {e}", status=500)
+        return HttpResponse(f"Erro na organização: {e}", status=500)
