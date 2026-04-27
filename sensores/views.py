@@ -359,57 +359,69 @@ def dados_brutos_json(request):
 # ============================================================
 def get_analise_completa(request, motor_id):
     try:
-        # 1. BUSCA OS DADOS QUE VOCÊ CADASTROU PARA ESTE MOTOR
+        # 1. Busca o motor no banco para usar RPM e CV
         motor = get_object_or_404(Motor, id=motor_id)
         
-        m_id_str = str(motor_id)
-        if m_id_str not in buffers or len(buffers[m_id_str]['x']) < BUFFER_SIZE:
+        # Garante que o motor_id seja string para ler do buffer
+        m_id = str(motor_id)
+        
+        if m_id not in buffers or len(buffers[m_id]['x']) < BUFFER_SIZE:
             return JsonResponse({'erro': 'Aguardando mais amostras...'}, status=400)
         
-        x_data = np.array(buffers[m_id_str]['x']) - np.mean(buffers[m_id_str]['x'])
+        # Prepara os dados (Removendo nível DC)
+        x_data = np.array(buffers[m_id]['x']) - np.mean(buffers[m_id]['x'])
+        window = np.hanning(BUFFER_SIZE)
+        x_windowed = x_data * window
         
-        # 2. CALCULA A ROTAÇÃO ESPERADA (Hz) BASEADA NO RPM DO CADASTRO
-        # Ex: 1750 RPM / 60 = 29.1 Hz
+        # Cálculos de Frequência (FFT)
+        fs = 10 
+        freqs = fftfreq(BUFFER_SIZE, 1/fs)[:BUFFER_SIZE//2]
+        fft_x = np.abs(fft(x_windowed))[:BUFFER_SIZE//2]
+        
+        # Frequência Dominante
+        idx_max = np.argmax(fft_x)
+        freq_dominante = freqs[idx_max]
+        
+        # Rotação esperada (Hz) e Limite ISO 10816
         hz_fundamental = motor.rpm / 60 if motor.rpm else 0
+        limite_alerta = 1.8 if (motor.cv and motor.cv <= 20) else 2.8
         
-        # 3. DEFINE O LIMITE DE ALERTA BASEADO NO CV (NORMA ISO 10816)
-        # Se o motor for até 20 CV (Classe I), o limite é mais rígido (1.8)
-        # Se for maior (Classe II), o limite sobe para 2.8
-        limite_severidade = 1.8 if (motor.cv and motor.cv <= 20) else 2.8
-
-        # --- Cálculos de Vibração ---
+        # Cálculos Estatísticos
         rms_total = np.sqrt(np.mean(x_data**2))
-        vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000
+        vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000 # mm/s
+        kurtosis_val = stats.kurtosis(x_data, fisher=True)
         
-        # --- FFT para Frequência Dominante ---
-        fft_x = np.abs(fft(x_data * np.hanning(BUFFER_SIZE)))[:BUFFER_SIZE//2]
-        freqs = fftfreq(BUFFER_SIZE, 1/10)[:BUFFER_SIZE//2]
-        freq_dominante = freqs[np.argmax(fft_x)]
-
-        # 4. DIAGNÓSTICO COMPARATIVO
+        # CÁLCULO DO CREST FACTOR (Estava faltando!)
+        pico = np.max(np.abs(x_data))
+        crest_factor = pico / rms_total if rms_total > 0 else 0
+        
+        # Diagnósticos
+        cond_rolamento = "Falha - Inspecionar" if kurtosis_val > 3 else "Normal"
         diagnostico_mecanico = "Normal"
-        if vel_rms > limite_severidade:
-            # Se o pico de vibração está perto da rotação do motor = Desbalanceamento
+        if vel_rms > limite_alerta:
             if hz_fundamental > 0 and abs(freq_dominante - hz_fundamental) < 2:
                 diagnostico_mecanico = "Desbalanceamento Provável"
             else:
                 diagnostico_mecanico = "Desalinhamento ou Folga"
 
+        # RETORNO DO JSON (Com as chaves que seu front-end precisa)
         return JsonResponse({
             'analise_basica': {
+                'rms_total': round(rms_total, 3),
                 'rms_mm_s': round(vel_rms, 2),
+                'kurtosis': round(kurtosis_val, 3),
+                'crest_factor': round(crest_factor, 2), # Agora o JS vai achar!
                 'freq_dominante': round(float(freq_dominante), 1),
-                'limite_iso': limite_severidade, # Agora o gráfico pode mostrar o limite real
-                'hz_fundamental': round(hz_fundamental, 1)
+                'limite_referencia': limite_alerta
             },
             'diagnostico': {
+                'condicao_rolamento': cond_rolamento,
                 'condicao_mancal': diagnostico_mecanico,
-                'alerta': "ALERTA" if vel_rms > limite_severidade else "NORMAL"
+                'alerta': "ALERTA" if vel_rms > limite_alerta else "NORMAL"
             },
-            'motor_info': {
+            'info_motor': {
                 'nome': motor.nome,
-                'cv': motor.cv,
-                'rpm': motor.rpm
+                'hz_esperado': round(hz_fundamental, 1)
             }
         })
     except Exception as e:
