@@ -9,6 +9,9 @@ urlpatterns = [
     path('api/receber/', views.receber_dados_brutos, name='receber_dados'),
     path('api/receber_bruto/', views.receber_dados_brutos, name='receber_dados_brutos'),
     
+    # --- ROTA DE EXPORTAÇÃO ADICIONADA AQUI ---
+    path('exportar-dados/', views.exportar_dados_csv, name='exportar_dados'),
+    
     # APIs de análise
     path('api/analise/<int:motor_id>/', views.get_analise_completa, name='analise_completa'),
     path('api/fft/<int:motor_id>/', views.get_fft_data, name='fft_data'),
@@ -26,7 +29,7 @@ urlpatterns = [
     path('api/motores/<int:motor_id>/excluir/', views.motor_excluir, name='motor_excluir'),
     path('api/ultimo_motor/', views.ultimo_motor, name='ultimo_motor'),
 
-    # --- AS LINHAS QUE ESTAVAM FORA DEVEM FICAR AQUI DENTRO ---
+    # APIs de histórico
     path('api/dados_brutos/', views.dados_brutos_json, name='dados_brutos'),
     path('api/dados_historico_hora/', views.dados_historico_hora_json, name='dados_historico_hora'),
 ]
