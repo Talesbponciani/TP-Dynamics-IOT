@@ -373,6 +373,32 @@ def get_analise_completa(request, motor_id):
         })
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
+    
+
+def get_fft_data(request, motor_id):
+    try:
+        # Garante que o ID seja tratado como string para buscar no buffer
+        m_id = str(motor_id)
+        
+        if m_id not in buffers or len(buffers[m_id]['x']) < BUFFER_SIZE:
+            return JsonResponse({'labels': [], 'amplitudes': []})
+        
+        # Prepara os dados (Removendo nível DC e aplicando Janela de Hanning)
+        x_data = np.array(buffers[m_id]['x']) - np.mean(buffers[m_id]['x'])
+        window = np.hanning(BUFFER_SIZE)
+        
+        # Cálculo da FFT
+        fft_res = np.abs(fft(x_data * window))[:BUFFER_SIZE//2]
+        fs = 10 # Frequência de amostragem
+        freqs = fftfreq(BUFFER_SIZE, 1/fs)[:BUFFER_SIZE//2]
+
+        return JsonResponse({
+            'labels': [round(f, 1) for f in freqs],
+            'amplitudes': [round(a, 5) for a in fft_res]
+        })
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
 # ============================================================
 # CRUD DE MOTORES
 # ============================================================
