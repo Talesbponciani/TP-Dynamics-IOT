@@ -32,3 +32,5 @@ urlpatterns = [
 ]
 
 path('api/dados_brutos/', views.dados_brutos_json, name='dados_brutos'),
+
+path('api/dados_historico_hora/', views.dados_historico_hora_json, name='dados_historico_hora'),

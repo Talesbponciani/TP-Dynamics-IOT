@@ -238,48 +238,73 @@ def receber_dados_brutos(request):
 
 def dados_json(request):
     """
-    Retorna dados agrupados por HORA para o gráfico.
-    - Mantém dados brutos no banco (não perde informação)
-    - Exibe médias por hora na interface
+    Retorna dados BRUTOS para o dashboard principal (tempo real).
+    Últimas 50 leituras.
     """
     motor_id = request.GET.get('motor_id')
     
-    # Filtra pelo motor, se fornecido
-    queryset = Leitura.objects.filter(motor_id=motor_id) if motor_id else Leitura.objects.all()
+    if motor_id:
+        dados = Leitura.objects.filter(motor_id=motor_id).order_by('-id')[:50]
+    else:
+        dados = Leitura.objects.all().order_by('-id')[:50]
     
-    # Agrupa por hora e calcula estatísticas
-    dados_agrupados = queryset.annotate(
+    lista = []
+    for d in reversed(dados):
+        lista.append({
+            "data": d.data.strftime("%H:%M:%S") if d.data else "",
+            "motor_id": d.motor.id if d.motor else None,
+            "temperatura": float(d.temperatura or 0),
+            "rms": float(d.rms or 0),
+            "vibX": float(d.vibX or 0),
+            "vibY": float(d.vibY or 0),
+            "vibZ": float(d.vibZ or 0)
+        })
+    return JsonResponse(lista, safe=False)
+
+def dados_historico_hora_json(request):
+    """
+    Retorna dados AGRUPADOS POR HORA para a página de Histórico.
+    Médias, máximos, mínimos de cada hora.
+    """
+    motor_id = request.GET.get('motor_id')
+    
+    if not motor_id:
+        return JsonResponse([], safe=False)
+    
+    # Agrupa por hora
+    dados_agrupados = Leitura.objects.filter(
+        motor_id=motor_id
+    ).annotate(
         hora=TruncHour('data')
     ).values('hora').annotate(
-        # Médias principais
         temperatura_media=Avg('temperatura'),
+        temperatura_max=Max('temperatura'),
+        temperatura_min=Min('temperatura'),
         rms_medio=Avg('rms'),
+        rms_max=Max('rms'),
         vibX_medio=Avg('vibX'),
         vibY_medio=Avg('vibY'),
         vibZ_medio=Avg('vibZ'),
-        
-        # Estatísticas úteis (opcionais, para tooltips)
-        temperatura_max=Max('temperatura'),
-        temperatura_min=Min('temperatura'),
         total_leituras=Count('id')
-    ).order_by('-hora')[:168]  # 168 = últimas 168 horas (7 dias)
+    ).order_by('-hora')[:168]  # últimas 168 horas (7 dias)
     
-    # Formata para o front-end
     lista = []
-    for item in reversed(dados_agrupados):  # ordem crescente (mais antigo primeiro)
-        lista.append({
-            "data": item['hora'].strftime("%d/%m %H:00") if item['hora'] else "",
-            "data_iso": item['hora'].isoformat() if item['hora'] else "",  # para ordenação JS
-            "motor_id": int(motor_id) if motor_id else None,
-            "temperatura": round(float(item['temperatura_media'] or 0), 1),
-            "temperatura_max": round(float(item['temperatura_max'] or 0), 1),
-            "temperatura_min": round(float(item['temperatura_min'] or 0), 1),
-            "rms": round(float(item['rms_medio'] or 0), 3),
-            "vibX": round(float(item['vibX_medio'] or 0), 3),
-            "vibY": round(float(item['vibY_medio'] or 0), 3),
-            "vibZ": round(float(item['vibZ_medio'] or 0), 3),
-            "leituras_hora": item['total_leituras']
-        })
+    for item in reversed(dados_agrupados):
+        if item['hora']:
+            lista.append({
+                "data": item['hora'].strftime("%d/%m/%Y %H:00"),
+                "data_iso": item['hora'].isoformat(),
+                "motor_id": int(motor_id),
+                "temperatura_media": round(float(item['temperatura_media'] or 0), 1),
+                "temperatura_max": round(float(item['temperatura_max'] or 0), 1),
+                "temperatura_min": round(float(item['temperatura_min'] or 0), 1),
+                "rms_medio": round(float(item['rms_medio'] or 0), 3),
+                "rms_max": round(float(item['rms_max'] or 0), 3),
+                "vibX_medio": round(float(item['vibX_medio'] or 0), 3),
+                "vibY_medio": round(float(item['vibY_medio'] or 0), 3),
+                "vibZ_medio": round(float(item['vibZ_medio'] or 0), 3),
+                "leituras_hora": item['total_leituras']
+            })
     
     return JsonResponse(lista, safe=False)
 

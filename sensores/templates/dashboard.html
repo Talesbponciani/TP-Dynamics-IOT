@@ -1166,196 +1166,161 @@
         document.getElementById('emptyHistorico').style.display = 'block';
     }
     
-    async function carregarHistoricoDiario() {
-        const motorId = document.getElementById('historicoMotorSelect').value;
-        const dataSelecionada = document.getElementById('historicoDataSelect').value;
-        const tipoGrafico = document.getElementById('historicoTipoGrafico').value;
-        const variavel = document.getElementById('historicoVariavel').value;
-        
-        if (!motorId) {
-            showToast('❌ Selecione um motor!', 2000);
-            return;
-        }
-        
-        if (!dataSelecionada) {
-            showToast('❌ Selecione uma data!', 2000);
-            return;
-        }
-        
-        showToast('📅 Carregando histórico...', 1500);
-        
-        try {
-            const response = await fetch(`/api/dados/?motor_id=${motorId}`);
-            if (!response.ok) throw new Error('Erro ao buscar dados');
-            
-            const todosDados = await response.json();
-            
-            if (!todosDados || todosDados.length === 0) {
-                showToast('⚠️ Nenhum dado encontrado para este motor', 2000);
-                document.getElementById('historicoCard').style.display = 'none';
-                document.getElementById('emptyHistorico').style.display = 'block';
-                document.getElementById('emptyHistorico').innerHTML = '⚠️ Nenhum dado encontrado para este motor. Aguardando leituras do ESP32.';
-                return;
-            }
-            
-            // Filtrar por data
-            const dadosFiltrados = todosDados.filter(item => {
-                if (!item.data) return false;
-                // Formato esperado: "HH:MM:SS" - comparar com a data selecionada usando timestamp
-                const dataItem = new Date();
-                const [h, m, s] = item.data.split(':');
-                dataItem.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
-                dataItem.setFullYear(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
-                
-                const dataItemStr = dataItem.toISOString().split('T')[0];
-                return dataItemStr === dataSelecionada;
-            });
-            
-            if (dadosFiltrados.length === 0) {
-                showToast(`⚠️ Nenhuma leitura encontrada para ${dataSelecionada}`, 2000);
-                document.getElementById('historicoCard').style.display = 'none';
-                document.getElementById('emptyHistorico').style.display = 'block';
-                document.getElementById('emptyHistorico').innerHTML = `📭 Nenhuma leitura registrada em ${dataSelecionada} para este motor.`;
-                return;
-            }
-            
-            // Ordenar por horário
-            dadosFiltrados.sort((a, b) => {
-                const timeA = a.data.split(':').map(Number);
-                const timeB = b.data.split(':').map(Number);
-                return (timeA[0]*3600 + timeA[1]*60 + timeA[2]) - (timeB[0]*3600 + timeB[1]*60 + timeB[2]);
-            });
-            
-            // Extrair valores
-            const labels = dadosFiltrados.map(item => item.data);
-            const valores = dadosFiltrados.map(item => {
-                switch(variavel) {
-                    case 'temperatura': return item.temperatura || 0;
-                    case 'rms': return item.rms || 0;
-                    case 'vibX': return item.vibX || 0;
-                    case 'vibY': return item.vibY || 0;
-                    case 'vibZ': return item.vibZ || 0;
-                    default: return 0;
-                }
-            });
-            
-            // Nomes das variáveis
-            const varLabels = {
-                'temperatura': 'Temperatura (°C)',
-                'rms': 'RMS Total (m/s²)',
-                'vibX': 'Horizontal X (m/s²)',
-                'vibY': 'Axial Y (m/s²)',
-                'vibZ': 'Vertical Z (m/s²)'
-            };
-            
-            const motor = motores.find(m => m.id == motorId);
-            const motorNome = motor ? motor.nome : `ID ${motorId}`;
-            
-            // Atualizar título
-            document.getElementById('historicoChartTitle').innerHTML = `📊 ${motorNome} - ${varLabels[variavel]} - ${dataSelecionada}`;
-            
-            // Criar gráfico
-            const ctx = document.getElementById('historicoChart').getContext('2d');
-            if (historicoChart) historicoChart.destroy();
-            
-            // Configuração base do gráfico
-            let chartConfig = {
-                type: tipoGrafico,
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: varLabels[variavel],
-                        data: valores,
-                        borderColor: '#f39c12',
-                        backgroundColor: tipoGrafico === 'bar' ? 'rgba(243, 156, 18, 0.6)' : 'rgba(243, 156, 18, 0.2)',
-                        borderWidth: 2,
-                        fill: tipoGrafico !== 'bar' && tipoGrafico !== 'scatter',
-                        tension: 0.1,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#f39c12'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => `${context.raw} ${varLabels[variavel].split('(')[1]?.replace(')', '') || ''}`
-                            }
-                        },
-                        legend: { labels: { color: '#fff' } }
-                    },
-                    scales: tipoGrafico !== 'radar' ? {
-                        y: {
-                            ticks: { color: '#ccc' },
-                            grid: { color: 'rgba(255,255,255,0.1)' },
-                            title: { display: true, text: varLabels[variavel], color: '#ccc' }
-                        },
-                        x: {
-                            ticks: { color: '#ccc', rotation: 45, autoSkip: true, maxRotation: 45 },
-                            title: { display: true, text: 'Horário', color: '#ccc' }
-                        }
-                    } : undefined
-                }
-            };
-            
-            historicoChart = new Chart(ctx, chartConfig);
-            
-            // Calcular estatísticas
-            const valoresNumericos = valores.filter(v => v !== null && !isNaN(v));
-            if (valoresNumericos.length > 0) {
-                const min = Math.min(...valoresNumericos);
-                const max = Math.max(...valoresNumericos);
-                const avg = valoresNumericos.reduce((a,b) => a+b, 0) / valoresNumericos.length;
-                const first = valoresNumericos[0];
-                const last = valoresNumericos[valoresNumericos.length - 1];
-                const variacao = ((last - first) / (first || 1) * 100).toFixed(1);
-                
-                document.getElementById('historicoStats').innerHTML = `
-                    <div class="stat-item"><span class="stat-label">📊 Leituras:</span> <span class="stat-value">${valoresNumericos.length}</span></div>
-                    <div class="stat-item"><span class="stat-label">📈 Mínimo:</span> <span class="stat-value">${min.toFixed(2)}</span></div>
-                    <div class="stat-item"><span class="stat-label">📉 Máximo:</span> <span class="stat-value">${max.toFixed(2)}</span></div>
-                    <div class="stat-item"><span class="stat-label">📊 Média:</span> <span class="stat-value">${avg.toFixed(2)}</span></div>
-                    <div class="stat-item"><span class="stat-label">🔄 Variação:</span> <span class="stat-value ${variacao >= 0 ? 'status-alerta' : 'status-normal'}">${variacao}%</span></div>
-                `;
-            } else {
-                document.getElementById('historicoStats').innerHTML = '<div class="stat-item">Sem dados válidos</div>';
-            }
-            
-            // Preencher tabela
-            const tbody = document.getElementById('historicoTableBody');
-            tbody.innerHTML = '';
-            dadosFiltrados.forEach(item => {
-                let valor = 0;
-                switch(variavel) {
-                    case 'temperatura': valor = item.temperatura; break;
-                    case 'rms': valor = item.rms; break;
-                    case 'vibX': valor = item.vibX; break;
-                    case 'vibY': valor = item.vibY; break;
-                    case 'vibZ': valor = item.vibZ; break;
-                }
-                const unidade = varLabels[variavel].split('(')[1]?.replace(')', '') || '';
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td style="padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">${item.data}</td>
-                    <td style="padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold; color: #f39c12;">${valor !== undefined && valor !== null ? valor.toFixed(2) : '--'}</td>
-                    <td style="padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">${unidade}</td>
-                `;
-            });
-            
-            document.getElementById('historicoCard').style.display = 'block';
-            document.getElementById('emptyHistorico').style.display = 'none';
-            
-        } catch (error) {
-            console.error('Erro ao carregar histórico:', error);
-            showToast('❌ Erro ao carregar histórico', 2000);
-            document.getElementById('historicoCard').style.display = 'none';
-            document.getElementById('emptyHistorico').style.display = 'block';
-            document.getElementById('emptyHistorico').innerHTML = '❌ Erro ao carregar dados. Verifique a conexão com o servidor.';
-        }
+   async function carregarHistoricoDiario() {
+    const motorId = document.getElementById('historicoMotorSelect').value;
+    const dataSelecionada = document.getElementById('historicoDataSelect').value;
+    const tipoGrafico = document.getElementById('historicoTipoGrafico').value;
+    const variavel = document.getElementById('historicoVariavel').value;
+    
+    if (!motorId) {
+        showToast('❌ Selecione um motor!', 2000);
+        return;
     }
     
+    if (!dataSelecionada) {
+        showToast('❌ Selecione uma data!', 2000);
+        return;
+    }
+    
+    showToast('📅 Carregando histórico...', 1500);
+    
+    try {
+        // API agrupada por hora
+        const response = await fetch(`/api/dados_historico_hora/?motor_id=${motorId}`);
+        if (!response.ok) throw new Error('Erro ao buscar dados');
+        
+        const dadosAgrupados = await response.json();
+        
+        if (!dadosAgrupados || dadosAgrupados.length === 0) {
+            showToast('⚠️ Nenhum dado encontrado para este motor', 2000);
+            document.getElementById('historicoCard').style.display = 'none';
+            document.getElementById('emptyHistorico').style.display = 'block';
+            document.getElementById('emptyHistorico').innerHTML = '⚠️ Nenhum dado encontrado. Aguardando leituras do ESP32.';
+            return;
+        }
+        
+        // Filtrar por data selecionada
+        const dadosFiltrados = dadosAgrupados.filter(item => {
+            if (!item.data) return false;
+            const dataItem = item.data.split(' ')[0];
+            return dataItem === dataSelecionada.split('-').reverse().join('/');
+        });
+        
+        if (dadosFiltrados.length === 0) {
+            showToast(`⚠️ Nenhuma leitura encontrada para ${dataSelecionada}`, 2000);
+            document.getElementById('historicoCard').style.display = 'none';
+            document.getElementById('emptyHistorico').style.display = 'block';
+            document.getElementById('emptyHistorico').innerHTML = `📭 Nenhuma leitura registrada em ${dataSelecionada} para este motor.`;
+            return;
+        }
+        
+        // Extrair labels e valores
+        const labels = dadosFiltrados.map(item => item.data.split(' ')[1]);
+        
+        let valores = [];
+        let varLabel = '';
+        let unidade = '';
+        
+        if (variavel === 'temperatura') {
+            valores = dadosFiltrados.map(item => item.temperatura_media || 0);
+            varLabel = 'Temperatura Média';
+            unidade = '°C';
+        } else {
+            valores = dadosFiltrados.map(item => item.rms_medio || 0);
+            varLabel = 'RMS Médio';
+            unidade = 'm/s²';
+        }
+        
+        const motor = motores.find(m => m.id == motorId);
+        const motorNome = motor ? motor.nome : `ID ${motorId}`;
+        
+        // Atualizar título
+        document.getElementById('historicoChartTitle').innerHTML = `📊 ${motorNome} - ${varLabel} - ${dataSelecionada}`;
+        
+        // Criar gráfico
+        const ctx = document.getElementById('historicoChart').getContext('2d');
+        if (historicoChart) historicoChart.destroy();
+        
+        historicoChart = new Chart(ctx, {
+            type: tipoGrafico,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: `${varLabel} (${unidade})`,
+                    data: valores,
+                    borderColor: '#f39c12',
+                    backgroundColor: tipoGrafico === 'bar' ? 'rgba(243, 156, 18, 0.6)' : 'rgba(243, 156, 18, 0.2)',
+                    borderWidth: 2,
+                    fill: tipoGrafico !== 'bar',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#ccc' },
+                        grid: { color: 'rgba(255,255,255,0.1)' },
+                        title: { display: true, text: `${varLabel} (${unidade})`, color: '#ccc' }
+                    },
+                    x: {
+                        ticks: { color: '#ccc', rotation: 45 },
+                        title: { display: true, text: 'Horário', color: '#ccc' }
+                    }
+                }
+            }
+        });
+        
+        // Calcular estatísticas
+        const valoresNumericos = valores.filter(v => v !== null && !isNaN(v));
+        if (valoresNumericos.length > 0) {
+            const min = Math.min(...valoresNumericos);
+            const max = Math.max(...valoresNumericos);
+            const avg = valoresNumericos.reduce((a,b) => a+b, 0) / valoresNumericos.length;
+            const first = valoresNumericos[0];
+            const last = valoresNumericos[valoresNumericos.length - 1];
+            const variacao = ((last - first) / (first || 1) * 100).toFixed(1);
+            
+            document.getElementById('historicoStats').innerHTML = `
+                <div class="stat-item"><span class="stat-label">📊 Horas:</span> <span class="stat-value">${valoresNumericos.length}</span></div>
+                <div class="stat-item"><span class="stat-label">📈 Mínimo:</span> <span class="stat-value">${min.toFixed(2)}</span></div>
+                <div class="stat-item"><span class="stat-label">📉 Máximo:</span> <span class="stat-value">${max.toFixed(2)}</span></div>
+                <div class="stat-item"><span class="stat-label">📊 Média:</span> <span class="stat-value">${avg.toFixed(2)}</span></div>
+                <div class="stat-item"><span class="stat-label">🔄 Variação:</span> <span class="stat-value ${variacao >= 0 ? 'status-alerta' : 'status-normal'}">${variacao}%</span></div>
+            `;
+        } else {
+            document.getElementById('historicoStats').innerHTML = '<div class="stat-item">Sem dados válidos</div>';
+        }
+        
+        // Preencher tabela
+        const tbody = document.getElementById('historicoTableBody');
+        tbody.innerHTML = '';
+        dadosFiltrados.forEach(item => {
+            const hora = item.data.split(' ')[1];
+            let valor = variavel === 'temperatura' ? item.temperatura_media : item.rms_medio;
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td style="padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">${hora}</td>
+                <td style="padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold; color: #f39c12;">${valor !== undefined && valor !== null ? valor.toFixed(2) : '--'}</td>
+                <td style="padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">${unidade}</td>
+            `;
+        });
+        
+        document.getElementById('historicoCard').style.display = 'block';
+        document.getElementById('emptyHistorico').style.display = 'none';
+        
+    } catch (error) {
+        console.error('Erro ao carregar histórico:', error);
+        showToast('❌ Erro ao carregar histórico', 2000);
+        document.getElementById('historicoCard').style.display = 'none';
+        document.getElementById('emptyHistorico').style.display = 'block';
+        document.getElementById('emptyHistorico').innerHTML = '❌ Erro ao carregar dados. Verifique a conexão com o servidor.';
+    }
+}
     // ==================== FUNÇÕES EXISTENTES (mantidas) ====================
     function verificarSessao() {
         const authenticated = sessionStorage.getItem('authenticated');
@@ -2101,133 +2066,102 @@
     }
     
     async function carregarDadosAPI() {
-    if (!motorSelecionado) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/dados/?motor_id=${motorSelecionado}`);
-        if (!response.ok) throw new Error('Erro ao buscar dados agrupados');
-        
-        const dadosAgrupados = await response.json();
-        
-        if (!dadosAgrupados || dadosAgrupados.length === 0) {
+        if (!motorSelecionado || motorSelecionado === '') {
+            limparGraficos();
+            document.getElementById('historicoLista').innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
+            document.getElementById('tempAtual').innerText = '--';
+            document.getElementById('rmsAtual').innerText = '--';
+            document.getElementById('horizAtual').innerText = '--';
+            document.getElementById('vertAtual').innerText = '--';
+            document.getElementById('axialAtual').innerText = '--';
             document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('noDataMessage').innerHTML = '⚠️ Selecione um motor para visualizar os dados.';
             return;
         }
-        
-        document.getElementById('noDataMessage').style.display = 'none';
-        
-        const labels = dadosAgrupados.map(item => item.data);
-        const temperaturas = dadosAgrupados.map(item => item.temperatura);
-        const rmsValues = dadosAgrupados.map(item => item.rms);
-        const vibXValues = dadosAgrupados.map(item => item.vibX);
-        const vibYValues = dadosAgrupados.map(item => item.vibY);
-        const vibZValues = dadosAgrupados.map(item => item.vibZ);
-        
-        const ultimoIndex = dadosAgrupados.length - 1;
-        if (ultimoIndex >= 0) {
-            document.getElementById('tempAtual').innerText = temperaturas[ultimoIndex]?.toFixed(1) || '--';
-            document.getElementById('rmsAtual').innerText = rmsValues[ultimoIndex]?.toFixed(3) || '--';
-            document.getElementById('horizAtual').innerText = vibXValues[ultimoIndex]?.toFixed(3) || '--';
-            document.getElementById('vertAtual').innerText = vibZValues[ultimoIndex]?.toFixed(3) || '--';
-            document.getElementById('axialAtual').innerText = vibYValues[ultimoIndex]?.toFixed(3) || '--';
-            
-            document.getElementById('tempValue').innerHTML = `${temperaturas[ultimoIndex]?.toFixed(1) || '--'} °C`;
-            document.getElementById('rmsValue').innerHTML = `${rmsValues[ultimoIndex]?.toFixed(3) || '--'} m/s²`;
-            document.getElementById('horizontalValue').innerHTML = `${vibXValues[ultimoIndex]?.toFixed(3) || '--'} m/s²`;
-            document.getElementById('verticalValue').innerHTML = `${vibZValues[ultimoIndex]?.toFixed(3) || '--'} m/s²`;
-            document.getElementById('axialValue').innerHTML = `${vibYValues[ultimoIndex]?.toFixed(3) || '--'} m/s²`;
-        }
-        
-        const historicoLista = document.getElementById('historicoLista');
-        if (historicoLista && dadosAgrupados.length > 0) {
-            const ultimasHoras = dadosAgrupados.slice(-10).reverse();
-            historicoLista.innerHTML = ultimasHoras.map(item => `
-                <li>
-                    <span class="historico-tempo">${item.data}</span>
-                    <span>🌡️ ${item.temperatura?.toFixed(1) || '--'}°C | RMS: ${item.rms?.toFixed(2) || '--'}</span>
-                </li>
-            `).join('');
-            
-            if (dadosAgrupados.length > 10) {
-                historicoLista.innerHTML += `<li style="justify-content:center; opacity:0.7;">📊 +${dadosAgrupados.length - 10} horas anteriores</li>`;
+        let url = `/api/dados/?motor_id=${motorSelecionado}`;
+        fetch(url).then(response => response.json()).then(dados => {
+            const noDataDiv = document.getElementById('noDataMessage');
+            if (dados && dados.length > 0) {
+                dadosRecebidos = true;
+                noDataDiv.style.display = 'none';
+                const dadosOrdenados = [...dados].reverse();
+                const ultimo = dados[dados.length - 1];
+                document.getElementById('tempAtual').innerText = ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--';
+                document.getElementById('rmsAtual').innerText = ultimo.rms ? ultimo.rms.toFixed(2) : '--';
+                document.getElementById('horizAtual').innerText = ultimo.vibX ? ultimo.vibX.toFixed(2) : '--';
+                document.getElementById('vertAtual').innerText = ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--';
+                document.getElementById('axialAtual').innerText = ultimo.vibY ? ultimo.vibY.toFixed(2) : '--';
+                document.getElementById('tempValue').innerHTML = `${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'} °C`;
+                document.getElementById('rmsValue').innerHTML = `${ultimo.rms ? ultimo.rms.toFixed(2) : '--'} m/s²`;
+                document.getElementById('horizontalValue').innerHTML = `${ultimo.vibX ? ultimo.vibX.toFixed(2) : '--'} m/s²`;
+                document.getElementById('verticalValue').innerHTML = `${ultimo.vibZ ? ultimo.vibZ.toFixed(2) : '--'} m/s²`;
+                document.getElementById('axialValue').innerHTML = `${ultimo.vibY ? ultimo.vibY.toFixed(2) : '--'} m/s²`;
+                const alarmConfig = alarmConfigs[motorSelecionado] || { rms: 3.0, x: 3.0, y: 3.0, z: 3.0, temp: 50 };
+                verificarEAlarm('cardRMS', ultimo.rms || 0, alarmConfig.rms);
+                verificarEAlarm('cardX', ultimo.vibX || 0, alarmConfig.x);
+                verificarEAlarm('cardY', ultimo.vibY || 0, alarmConfig.y);
+                verificarEAlarm('cardZ', ultimo.vibZ || 0, alarmConfig.z);
+                verificarEAlarm('cardTemp', ultimo.temperatura || 0, alarmConfig.temp);
+                const lista = document.getElementById('historicoLista');
+                if (lista.children.length === 1 && lista.children[0].innerText.includes("Aguardando")) lista.innerHTML = '';
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="historico-tempo">${ultimo.data || '--'}</span><span>${ultimo.temperatura ? ultimo.temperatura.toFixed(1) : '--'}°C | RMS ${ultimo.rms ? ultimo.rms.toFixed(2) : '--'}</span>`;
+                lista.insertBefore(li, lista.firstChild);
+                if (lista.children.length > 10) lista.removeChild(lista.lastChild);
+                const pontosTemp = [], pontosRms = [], pontosHoriz = [], pontosVert = [], pontosAxial = [];
+                dadosOrdenados.forEach(item => {
+                    let timestamp = Date.now();
+                    if (item.data) {
+                        const [h, m, s] = item.data.split(':');
+                        const date = new Date();
+                        date.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
+                        timestamp = date.getTime();
+                    }
+                    pontosTemp.push({ x: timestamp, y: item.temperatura || 0 });
+                    pontosRms.push({ x: timestamp, y: item.rms || 0 });
+                    pontosHoriz.push({ x: timestamp, y: item.vibX || 0 });
+                    pontosVert.push({ x: timestamp, y: item.vibZ || 0 });
+                    pontosAxial.push({ x: timestamp, y: item.vibY || 0 });
+                });
+                if (tempChart) { tempChart.data.datasets[0].data = pontosTemp; tempChart.update(); }
+                if (rmsChart) { rmsChart.data.datasets[0].data = pontosRms; rmsChart.update(); }
+                if (horizontalChart) { horizontalChart.data.datasets[0].data = pontosHoriz; horizontalChart.update(); }
+                if (verticalChart) { verticalChart.data.datasets[0].data = pontosVert; verticalChart.update(); }
+                if (axialChart) { axialChart.data.datasets[0].data = pontosAxial; axialChart.update(); }
+            } else {
+                noDataDiv.style.display = 'block';
+                noDataDiv.innerHTML = `⚠️ Nenhum dado encontrado para o motor ID ${motorSelecionado}. Aguardando leituras...`;
+                limparGraficos();
+                document.getElementById('tempAtual').innerText = '--';
+                document.getElementById('rmsAtual').innerText = '--';
+                document.getElementById('horizAtual').innerText = '--';
+                document.getElementById('vertAtual').innerText = '--';
+                document.getElementById('axialAtual').innerText = '--';
+                document.getElementById('historicoLista').innerHTML = '<li style="justify-content:center; color:#aaa;">⏳ Aguardando dados do ESP32...</li>';
             }
-        }
+        }).catch(error => {
+            console.error('Erro ao buscar dados:', error);
+            limparGraficos();
+            document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('noDataMessage').innerHTML = '⚠️ Erro de conexão com o servidor.';
+        });
         
-        if (window.tempChart) {
-            window.tempChart.data.labels = labels;
-            window.tempChart.data.datasets[0].data = temperaturas;
-            window.tempChart.update();
-        }
+        try {
+            const response = await fetch(`/api/analise/${motorSelecionado}/`);
+            if (response.ok) {
+                const analise = await response.json();
+                if (analise.analise_basica) atualizarMetricasSKF(analise.analise_basica);
+            }
+        } catch (err) { console.log('Análise avançada não disponível ainda:', err); }
         
-        if (window.rmsChart) {
-            window.rmsChart.data.labels = labels;
-            window.rmsChart.data.datasets[0].data = rmsValues;
-            window.rmsChart.update();
-        }
-        
-        if (window.horizontalChart) {
-            window.horizontalChart.data.labels = labels;
-            window.horizontalChart.data.datasets[0].data = vibXValues;
-            window.horizontalChart.update();
-        }
-        
-        if (window.verticalChart) {
-            window.verticalChart.data.labels = labels;
-            window.verticalChart.data.datasets[0].data = vibZValues;
-            window.verticalChart.update();
-        }
-        
-        if (window.axialChart) {
-            window.axialChart.data.labels = labels;
-            window.axialChart.data.datasets[0].data = vibYValues;
-            window.axialChart.update();
-        }
-        
-        atualizarMetricasSKF(dadosAgrupados[ultimoIndex]);
-        
-    } catch (error) {
-        console.error('Erro ao carregar dados agrupados:', error);
-        document.getElementById('noDataMessage').style.display = 'block';
+        try {
+            const response = await fetch(`/api/fft/${motorSelecionado}/`);
+            if (!response.ok) { document.getElementById('fftStatus').innerHTML = `⏳ FFT indisponível (HTTP ${response.status}) - Aguardando amostras...`; return; }
+            const fftData = await response.json();
+            if (fftData && fftData.fft_data && Array.isArray(fftData.fft_data) && fftData.fft_data.length > 0) atualizarGraficoFFT(fftData);
+            else { document.getElementById('fftStatus').innerHTML = '⏳ Aguardando amostras suficientes para FFT (256 amostras)...'; if(fftChart){ fftChart.data.datasets[0].data = []; fftChart.update(); } }
+        } catch (err) { console.error('Erro ao buscar FFT:', err); document.getElementById('fftStatus').innerHTML = '❌ Erro ao carregar FFT'; }
     }
-}
-
-function atualizarMetricasSKF(dado) {
-    if (!dado) return;
-    
-    let severidade = 'Normal';
-    let recomendacao = 'Monitorar';
-    
-    if (dado.rms < 1.0) {
-        severidade = 'Boa';
-        recomendacao = 'Operação normal';
-    } else if (dado.rms < 2.8) {
-        severidade = 'Aceitável';
-        recomendacao = 'Monitorar tendência';
-    } else if (dado.rms < 4.5) {
-        severidade = 'Insatisfatória';
-        recomendacao = 'Planejar manutenção';
-    } else {
-        severidade = 'Perigosa';
-        recomendacao = 'PARAR EQUIPAMENTO IMEDIATAMENTE';
-    }
-    
-    const velocidade = dado.rms ? (dado.rms * 9.81 / (2 * Math.PI * 60) * 1000).toFixed(2) : '--';
-    
-    const elementos = ['skfCrest', 'skfKurtosis', 'skfVelocity', 'skfSeveridade'];
-    const valores = [dado.crest || '--', dado.kurtosis || '--', velocidade, severidade];
-    
-    elementos.forEach((id, idx) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = valores[idx];
-    });
-    
-    const diagnosticoEl = document.getElementById('skfDiagnostico');
-    if (diagnosticoEl) {
-        diagnosticoEl.innerHTML = `🔍 Diagnóstico: ${severidade} - ${recomendacao} ${severidade === 'Perigosa' ? '⚠️' : '✅'}`;
-    }
-}
     
     function initDashboard() {
         carregarMotores();
