@@ -373,15 +373,19 @@ def get_analise_completa(request, motor_id):
 
 def get_fft_data(request, motor_id):
     try:
-        if motor_id not in buffers or len(buffers[motor_id]['x']) < BUFFER_SIZE:
-            return JsonResponse({'erro': 'Dados insuficientes'}, status=400)
-        
-        x_data = np.array(buffers[motor_id]['x']) - np.mean(buffers[motor_id]['x'])
-        fft_res = np.abs(fft(x_data * np.hanning(len(x_data))))[:BUFFER_SIZE//2]
+        if str(motor_id) not in buffers or len(buffers[str(motor_id)]['x']) < BUFFER_SIZE:
+            return JsonResponse({'labels': [], 'datasets': []}) # Retorna vazio em vez de erro 400
+
+        x_data = np.array(buffers[str(motor_id)]['x']) - np.mean(buffers[str(motor_id)]['x'])
+        # Cálculo da FFT
+        fft_res = np.abs(fft(x_data * np.hanning(BUFFER_SIZE)))[:BUFFER_SIZE//2]
         freqs = fftfreq(BUFFER_SIZE, 1/10)[:BUFFER_SIZE//2]
-        
-        dados_fft = [{'freq': round(f, 1), 'amp': round(a, 5)} for f, a in zip(freqs, fft_res) if f <= 50]
-        return JsonResponse({'fft_data': dados_fft})
+
+        # Enviando como listas simples para o JavaScript ler direto
+        return JsonResponse({
+            'labels': [round(f, 1) for f in freqs],
+            'amplitudes': [round(a, 5) for a in fft_res]
+        })
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
 
