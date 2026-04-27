@@ -534,6 +534,8 @@ import csv
 from django.http import HttpResponse
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import Avg # Importante para calcular a média
+from django.db.models.functions import TruncHour # Importante para agrupar por hora
 from .models import Leitura
 
 def exportar_dados_csv(request):
@@ -542,41 +544,49 @@ def exportar_dados_csv(request):
         vinte_quatro_horas_atras = timezone.now() - timedelta(hours=24)
         
         response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-        filename = f"grafico_24h_agrupado_motor_{motor_id}.csv"
+        filename = f"historico_grafico_24h_motor_{motor_id}.csv"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         writer = csv.writer(response, delimiter=';')
         
-        # Busca os dados uma única vez para economizar banco de dados
-        leituras = Leitura.objects.filter(
+        # 1. BUSCA E AGRUPAMENTO (DADOS DO GRÁFICO)
+        # O TruncHour agrupa todas as leituras de uma mesma hora em um único ponto
+        dados_agrupados = Leitura.objects.filter(
             motor_id=motor_id,
             data__gte=vinte_quatro_horas_atras
-        ).order_by('data') # Ordem cronológica (do mais antigo para o novo)
+        ).annotate(
+            hora=TruncHour('data') # Cria um campo temporário 'hora' (ex: 10:00, 11:00)
+        ).values('hora').annotate(
+            temp_media=Avg('temperatura'),
+            rms_medio=Avg('rms'),
+            vibX_media=Avg('vibX'),
+            vibY_media=Avg('vibY'),
+            vibZ_media=Avg('vibZ')
+        ).order_by('hora')
 
-        # --- BLOCO 1: TEMPERATURA ---
-        writer.writerow(['--- LEITURAS DE TEMPERATURA ---'])
-        writer.writerow(['Data e Hora', 'Valor', 'Unidade'])
-        for item in leituras:
-            writer.writerow([item.data.strftime('%d/%m/%Y %H:%M:%S'), str(item.temperatura).replace('.', ','), '°C'])
+        # 2. ESCRITA NO CSV (ESTRUTURA VERTICAL AGRUPADA)
         
-        writer.writerow([]) # Linha em branco para separar
+        # --- BLOCO TEMPERATURA ---
+        writer.writerow(['--- TEMPERATURA MÉDIA POR HORA (24H) ---'])
+        writer.writerow(['Horário', 'Média (°C)'])
+        for ponto in dados_agrupados:
+            writer.writerow([
+                ponto['hora'].strftime('%d/%m/%Y %H:00'), 
+                str(round(ponto['temp_media'], 2)).replace('.', ',')
+            ])
+        
+        writer.writerow([]) # Espaço
 
-        # --- BLOCO 2: RMS ---
-        writer.writerow(['--- LEITURAS DE RMS ---'])
-        writer.writerow(['Data e Hora', 'Valor', 'Unidade'])
-        for item in leituras:
-            writer.writerow([item.data.strftime('%d/%m/%Y %H:%M:%S'), str(item.rms).replace('.', ','), 'm/s²'])
-
-        writer.writerow([]) # Linha em branco
-
-        # --- BLOCO 3: VIBRAÇÃO X ---
-        writer.writerow(['--- LEITURAS DE VIBRAÇÃO X ---'])
-        writer.writerow(['Data e Hora', 'Valor', 'Unidade'])
-        for item in leituras:
-            writer.writerow([item.data.strftime('%d/%m/%Y %H:%M:%S'), str(item.vibX).replace('.', ','), 'g'])
-
-        # Repita o padrão para Y e Z se desejar...
+        # --- BLOCO RMS ---
+        writer.writerow(['--- RMS MÉDIO POR HORA (24H) ---'])
+        writer.writerow(['Horário', 'Média (m/s²)'])
+        for ponto in dados_agrupados:
+            writer.writerow([
+                ponto['hora'].strftime('%d/%m/%Y %H:00'), 
+                str(round(ponto['rms_medio'], 2)).replace('.', ',')
+            ])
 
         return response
+
     except Exception as e:
-        return HttpResponse(f"Erro na organização vertical: {e}", status=500)
+        return HttpResponse(f"Erro ao gerar dados do gráfico: {e}", status=500)
