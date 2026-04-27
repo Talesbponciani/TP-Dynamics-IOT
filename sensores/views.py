@@ -24,35 +24,61 @@ from django.contrib.auth.models import User
 
 @csrf_exempt
 @csrf_exempt
+@csrf_exempt
 def receber_dados_brutos(request):
-    # --- MARRETA DE RECUPERAÇÃO DEFINITIVA ---
-    try:
-        # Tenta resetar o admin atual
-        u = User.objects.filter(is_superuser=True).first()
-        if u:
-            u.set_password('teste123')
-            u.save()
-        else:
-            # Se não existir nenhum admin, cria um NOVO agora mesmo
-            User.objects.create_superuser('tales_admin', 'admin@teste.com', 'teste123')
-    except:
-        pass 
-    # ------------------------------------------
-
+    """
+    Recebe dados do ESP32, processa vibração/RMS e 
+    SALVA no histórico do banco de dados automaticamente.
+    """
     if request.method != 'POST':
-        return JsonResponse({'erro': 'Somente POST'}, status=405)
-    # 3. O BLOCO TRY (Agora com o except no final)
+        return JsonResponse({'erro': 'Metodo negado'}, status=405)
+
     try:
         data = json.loads(request.body)
         motor_id = data.get('motor_id')
         
-        # ... (seu código de leitura de vibX, vibY, etc continua aqui) ...
+        # 1. Verifica se o motor existe no banco
+        motor_instancia = get_object_or_404(Motor, id=motor_id)
+
+        # 2. Captura os dados brutos do JSON
+        temp = float(data.get('temp', 0))
+        raw_x = data.get('x', [])
         
-        return JsonResponse({'status': 'sucesso'}, status=201)
+        # Cálculo simples de RMS (ajuste conforme sua lógica de FFT se necessário)
+        if isinstance(raw_x, list) and len(raw_x) > 0:
+            np_x = np.array(raw_x)
+            valor_rms = np.sqrt(np.mean(np_x**2))
+        else:
+            valor_rms = float(data.get('rms', 0))
+
+        # 3. SALVA NO BANCO DE DADOS (Isso cria o histórico automático)
+        Leitura.objects.create(
+            motor=motor_instancia,
+            temperatura=temp,
+            rms=valor_rms,
+            vibX=float(np.mean(raw_x) if raw_x else 0),
+            # adicione vibY e vibZ se o seu sensor enviar
+        )
+
+        # 4. Alimenta o Buffer em memória (para o gráfico de FFT de tempo real)
+        m_id_str = str(motor_id)
+        if m_id_str not in buffers:
+            buffers[m_id_str] = {'x': [], 'y': [], 'z': []}
+        
+        if isinstance(raw_x, list):
+            buffers[m_id_str]['x'].extend(raw_x)
+            # Mantém apenas as últimas amostras do BUFFER_SIZE
+            while len(buffers[m_id_str]['x']) > BUFFER_SIZE:
+                buffers[m_id_str]['x'].pop(0)
+
+        return JsonResponse({
+            'status': 'sucesso', 
+            'motor': motor_instancia.nome,
+            'historico': 'gravado'
+        }, status=201)
 
     except Exception as e:
-        # Este é o 'except' que o Pylance disse que estava faltando!
-        return JsonResponse({'erro': str(e)}, status=500)
+        return JsonResponse({'erro': str(e)}, status=400)
 
 # ========== BUFFERS EM MEMÓRIA ==========
 # Estes buffers são limpos no deploy, mas as calibrações (offsets) 
