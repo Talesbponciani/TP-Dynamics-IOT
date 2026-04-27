@@ -359,74 +359,74 @@ def dados_brutos_json(request):
 # ============================================================
 def get_analise_completa(request, motor_id):
     try:
-        # 1. Busca o motor no banco para usar RPM e CV
         motor = get_object_or_404(Motor, id=motor_id)
         
-        # Garante que o motor_id seja string para ler do buffer
-        m_id = str(motor_id)
-        
+        # Tentamos buscar o ID tanto como número quanto como string para não ter erro
+        m_id = motor_id
+        if m_id not in buffers and str(m_id) in buffers:
+            m_id = str(m_id)
+
         if m_id not in buffers or len(buffers[m_id]['x']) < BUFFER_SIZE:
             return JsonResponse({'erro': 'Aguardando mais amostras...'}, status=400)
         
-        # Prepara os dados (Removendo nível DC)
         x_data = np.array(buffers[m_id]['x']) - np.mean(buffers[m_id]['x'])
         window = np.hanning(BUFFER_SIZE)
-        x_windowed = x_data * window
         
-        # Cálculos de Frequência (FFT)
+        # FFT e Frequência Dominante
         fs = 10 
         freqs = fftfreq(BUFFER_SIZE, 1/fs)[:BUFFER_SIZE//2]
-        fft_x = np.abs(fft(x_windowed))[:BUFFER_SIZE//2]
+        fft_x = np.abs(fft(x_data * window))[:BUFFER_SIZE//2]
+        freq_dominante = freqs[np.argmax(fft_x)]
         
-        # Frequência Dominante
-        idx_max = np.argmax(fft_x)
-        freq_dominante = freqs[idx_max]
-        
-        # Rotação esperada (Hz) e Limite ISO 10816
+        # Lógica ISO 10816 e RPM (Sua inteligência nova)
         hz_fundamental = motor.rpm / 60 if motor.rpm else 0
         limite_alerta = 1.8 if (motor.cv and motor.cv <= 20) else 2.8
         
-        # Cálculos Estatísticos
         rms_total = np.sqrt(np.mean(x_data**2))
-        vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000 # mm/s
+        vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000
         kurtosis_val = stats.kurtosis(x_data, fisher=True)
-        
-        # CÁLCULO DO CREST FACTOR (Estava faltando!)
         pico = np.max(np.abs(x_data))
         crest_factor = pico / rms_total if rms_total > 0 else 0
         
-        # Diagnósticos
         cond_rolamento = "Falha - Inspecionar" if kurtosis_val > 3 else "Normal"
-        diagnostico_mecanico = "Normal"
-        if vel_rms > limite_alerta:
-            if hz_fundamental > 0 and abs(freq_dominante - hz_fundamental) < 2:
-                diagnostico_mecanico = "Desbalanceamento Provável"
-            else:
-                diagnostico_mecanico = "Desalinhamento ou Folga"
+        cond_mancal = "Desalinhamento Provável" if (np.sum(fft_x) > 50) else "Normal"
 
-        # RETORNO DO JSON (Com as chaves que seu front-end precisa)
         return JsonResponse({
             'analise_basica': {
                 'rms_total': round(rms_total, 3),
                 'rms_mm_s': round(vel_rms, 2),
                 'kurtosis': round(kurtosis_val, 3),
-                'crest_factor': round(crest_factor, 2), # Agora o JS vai achar!
-                'freq_dominante': round(float(freq_dominante), 1),
-                'limite_referencia': limite_alerta
+                'crest_factor': round(crest_factor, 2),
+                'freq_dominante': round(float(freq_dominante), 1)
             },
             'diagnostico': {
                 'condicao_rolamento': cond_rolamento,
-                'condicao_mancal': diagnostico_mecanico,
+                'condicao_mancal': cond_mancal,
                 'alerta': "ALERTA" if vel_rms > limite_alerta else "NORMAL"
-            },
-            'info_motor': {
-                'nome': motor.nome,
-                'hz_esperado': round(hz_fundamental, 1)
             }
         })
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
 
+def get_fft_data(request, motor_id):
+    try:
+        m_id = motor_id
+        if m_id not in buffers and str(m_id) in buffers:
+            m_id = str(m_id)
+
+        if m_id not in buffers or len(buffers[m_id]['x']) < BUFFER_SIZE:
+            return JsonResponse({'fft_data': []})
+
+        x_data = np.array(buffers[m_id]['x']) - np.mean(buffers[m_id]['x'])
+        fft_res = np.abs(fft(x_data * np.hanning(len(x_data))))[:BUFFER_SIZE//2]
+        freqs = fftfreq(BUFFER_SIZE, 1/10)[:BUFFER_SIZE//2]
+
+        # VOLTANDO AO FORMATO ORIGINAL (Lista de dicionários)
+        dados_fft = [{'freq': round(f, 1), 'amp': round(a, 5)} for f, a in zip(freqs, fft_res) if f <= 50]
+        return JsonResponse({'fft_data': dados_fft})
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+    
 def get_fft_data(request, motor_id):
     try:
         # Garante que o ID seja tratado como string para buscar no buffer
