@@ -4,7 +4,7 @@ Django settings for monitoramento project.
 
 from pathlib import Path
 import os
-import dj_database_url
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -72,11 +72,14 @@ WSGI_APPLICATION = 'monitoramento.wsgi.application'
 
 # Banco de Dados - PostgreSQL para Render
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///db.sqlite3',
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'tpdynamics',
+        'USER': 'postgres',
+        'PASSWORD': '259319@Tales',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
 
 # Password validation
