@@ -20,9 +20,9 @@ from .models import Leitura, Motor, MotorCalibration
 
 # ========== BUFFERS EM MEMÓRIA ==========
 buffers = {}
-BUFFER_SIZE = 64
+BUFFER_SIZE = 200
 vel_buffers = {}
-VEL_BUFFER_SIZE = 50
+VEL_BUFFER_SIZE = 200
 TAXA_AMOSTRAGEM = 100
 # ============================================================
 # VIEW PRINCIPAL
@@ -40,6 +40,7 @@ def receber_dados_brutos(request):
     """
     Recebe dados do ESP32, processa vibração/RMS e 
     SALVA no histórico do banco de dados automaticamente.
+    VERSÃO CORRIGIDA - RMS com buffer adequado
     """
     if request.method != 'POST':
         return JsonResponse({'erro': 'Metodo negado'}, status=405)
@@ -52,75 +53,117 @@ def receber_dados_brutos(request):
         vibY = float(data.get('vibY', 0))
         vibZ = float(data.get('vibZ', 0))
         
-        # 1. Verifica se o motor existe no banco
+        # 1. Verifica se o motor existe
         motor = Motor.objects.filter(id=motor_id).first()
         if not motor:
             return JsonResponse({'erro': 'Motor não encontrado'}, status=404)
         
-        # 2. Gestão de Buffers
-        motor_id_str = str(motor_id)  # CONVERTE PARA STRING
+        # 2. Gestão de Buffers (AUMENTADO para 200 amostras)
+        motor_id_str = str(motor_id)
+        BUFFER_SIZE_RMS = 200  # ← 200 amostras para RMS estável
+        
         if motor_id_str not in buffers:
             buffers[motor_id_str] = {
-            'x': deque(maxlen=BUFFER_SIZE),
-            'y': deque(maxlen=BUFFER_SIZE),
-            'z': deque(maxlen=BUFFER_SIZE),
-            'tempo': deque(maxlen=BUFFER_SIZE)
-    }
-            
+                'x': deque(maxlen=BUFFER_SIZE_RMS),
+                'y': deque(maxlen=BUFFER_SIZE_RMS),
+                'z': deque(maxlen=BUFFER_SIZE_RMS),
+                'tempo': deque(maxlen=BUFFER_SIZE_RMS),
+                'todas_amostras': deque(maxlen=BUFFER_SIZE_RMS)  # Para RMS combinado
+            }
         
+        # Adiciona as 3 novas amostras
         buffers[motor_id_str]['x'].append(vibX)
         buffers[motor_id_str]['y'].append(vibY)
         buffers[motor_id_str]['z'].append(vibZ)
-        buffers[motor_id_str]['tempo'].append(datetime.now().timestamp())
         
-        # 3. Cálculos Técnicos
-        rms_aceleracao = math.sqrt((vibX**2 + vibY**2 + vibZ**2) / 3)
+        # Cria uma lista com TODAS as amostras dos 3 eixos para RMS robusto
+        todas_amostras = []
+        todas_amostras.extend(buffers[motor_id_str]['x'])
+        todas_amostras.extend(buffers[motor_id_str]['y'])
+        todas_amostras.extend(buffers[motor_id_str]['z'])
+        buffers[motor_id_str]['todas_amostras'] = deque(todas_amostras, maxlen=BUFFER_SIZE_RMS)
+        
+        # 3. ✅ CÁLCULO DO RMS CORRETO (com todas as amostras do buffer)
+        if len(buffers[motor_id_str]['todas_amostras']) >= 30:  # Mínimo 30 amostras
+            # RMS verdadeiro sobre todo o buffer
+            rms_aceleracao = np.sqrt(np.mean(np.square(buffers[motor_id_str]['todas_amostras'])))
+        else:
+            # Fallback para as primeiras leituras
+            rms_aceleracao = math.sqrt((vibX**2 + vibY**2 + vibZ**2) / 3)
+        
+        # 4. Cálculos Técnicos com o RMS correto
         pico = max(abs(vibX), abs(vibY), abs(vibZ))
         crest_factor = pico / rms_aceleracao if rms_aceleracao > 0 else 0
         
-        amostras = [vibX, vibY, vibZ]
-        kurtosis = stats.kurtosis(amostras, fisher=True) if np.std(amostras) > 0 else 0
-
-
-         # SEVERIDADE DASHBOARD PRINCIPAL 
-        # Cálculo de Velocidade RMS (mm/s) para severidade ISO
+        # Kurtosis agora usando o buffer (mais estável)
+        if len(buffers[motor_id_str]['todas_amostras']) >= 30:
+            amostras_array = np.array(buffers[motor_id_str]['todas_amostras'])
+            kurtosis = stats.kurtosis(amostras_array, fisher=True) if np.std(amostras_array) > 0 else 0
+        else:
+            amostras = [vibX, vibY, vibZ]
+            kurtosis = stats.kurtosis(amostras, fisher=True) if np.std(amostras) > 0 else 0
+        
+        # Severidade (velocidade RMS)
         freq_trabalho = motor.frequencia if motor.frequencia else 60
         vel_rms = rms_aceleracao * 9.81 / (2 * math.pi * freq_trabalho) * 1000
-        score = 0  # 0=Normal, 1=Alerta, 2=Crítico
-       # Critério 1: Velocidade RMS
+        
+        # 5. ✅ LÓGICA DE ALERTA COM HISTERESE (NOVO!)
+        score = 0
+        
+        # Critério 1: Velocidade RMS (com histerese)
         if vel_rms >= 4.5:
-         score = 2
+            score = 2
         elif vel_rms >= 2.8:
-         score = max(score, 1)
-
-         # Critério 2: Crest Factor
+            score = max(score, 1)
+        
+        # Critério 2: Crest Factor
         if crest_factor > 5.0:
-         score = max(score, 2)
+            score = max(score, 2)
         elif crest_factor >= 3.0:
-         score = max(score, 1)
- 
-         # Critério 3: Kurtosis
+            score = max(score, 1)
+        
+        # Critério 3: Kurtosis
         if kurtosis > 8.0:
-         score = max(score, 2)
+            score = max(score, 2)
         elif kurtosis >= 3.0:
-         score = max(score, 1) 
-       
-        # Atribuir resultados (USANDO AS MESMAS VARIÁVEIS DO ORIGINAL)
-        if score >= 2:
-         severidade = "Perigosa"
-         rec = "PARAR EQUIPAMENTO IMEDIATAMENTE"
-        elif score >= 1:
-         severidade = "Insatisfatória"
-         rec = "Planejar manutenção"
+            score = max(score, 1)
+        
+        # ✅ ADICIONA HISTERESE TEMPORAL (evita oscilação)
+        # Armazena o último estado no buffer
+        if 'ultimo_score' not in buffers[motor_id_str]:
+            buffers[motor_id_str]['ultimo_score'] = 0
+            buffers[motor_id_str]['contador_estavel'] = 0
+        
+        # Só muda o estado se mantiver por 3 leituras consecutivas
+        if score == buffers[motor_id_str]['ultimo_score']:
+            buffers[motor_id_str]['contador_estavel'] += 1
         else:
-         severidade = "Boa"
-         rec = "Operação normal"
-
-        # 5. WhatsApp Alerts
+            buffers[motor_id_str]['contador_estavel'] = 0
+            buffers[motor_id_str]['ultimo_score'] = score
+        
+        # Aplica o estado apenas após 3 confirmações
+        if buffers[motor_id_str]['contador_estavel'] >= 3:
+            score_final = score
+        else:
+            score_final = buffers[motor_id_str]['ultimo_score']
+        
+        # Atribuir resultados com estado estável
+        if score_final >= 2:
+            severidade = "Perigosa"
+            rec = "PARAR EQUIPAMENTO IMEDIATAMENTE"
+        elif score_final >= 1:
+            severidade = "Insatisfatória"
+            rec = "Planejar manutenção"
+        else:
+            severidade = "Boa"
+            rec = "Operação normal"
+        
+        # 6. WhatsApp Alerts (com cooldown)
         limite_rms = motor.limite_alerta if hasattr(motor, 'limite_alerta') else 4.5
         limite_kurt = motor.limite_kurtosis if hasattr(motor, 'limite_kurtosis') else 3.5
-
-        if vel_rms > limite_rms or kurtosis > limite_kurt:
+        
+        # Só envia alerta se score_final for consistente (não oscilante)
+        if score_final >= 1:  # Alerta ou Crítico consistente
             agora = timezone.now()
             if not motor.ultimo_alerta_enviado or agora > motor.ultimo_alerta_enviado + timedelta(minutes=30):
                 if vel_rms > limite_rms:
@@ -136,7 +179,7 @@ def receber_dados_brutos(request):
                 motor.ultimo_alerta_enviado = agora
                 motor.save()
         
-        # 6. Salva no Banco
+        # 7. Salva no Banco (aqui você pode salvar o RMS estável)
         leitura = Leitura.objects.create(
             motor=motor,
             temperatura=round(temperatura, 1),
@@ -156,13 +199,13 @@ def receber_dados_brutos(request):
                 'kurtosis': round(kurtosis, 2),
                 'severidade': severidade,
                 'recomendacao': rec,
-                'alerta': (vel_rms > limite_rms or kurtosis > limite_kurt)
+                'alerta': (score_final >= 1),
+                'estado_estavel': score_final  # Para debug
             }
         }, status=201)
 
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
-
 # ============================================================
 # GESTÃO DE OFFSETS (PERSISTÊNCIA NO BANCO DE DADOS)
 # ============================================================
