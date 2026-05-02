@@ -1,30 +1,40 @@
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.db.models import Avg, Count, Max, Min
+from django.db.models.functions import TruncHour
+from django.contrib.auth.models import User
+from django.http import HttpResponse
 import json
 import math
 import numpy as np
-
 from scipy.fft import fft, fftfreq
 from scipy import stats
 from collections import deque
-from datetime import datetime
-import os
-from django.db.models import Avg, Count, Max, Min
-from django.db.models.functions import TruncHour
+from datetime import datetime, timedelta
+import csv
 
-# --- AS NOVAS LINHAS DEVEM FICAR ASSIM ---
 from .services import enviar_alerta_whatsapp
-from django.utils import timezone
-from datetime import timedelta
-# -----------------------------------------
-
 from .models import Leitura, Motor, MotorCalibration
 
-from django.contrib.auth.models import User
+# ========== BUFFERS EM MEMÓRIA ==========
+buffers = {}
+BUFFER_SIZE = 64
+vel_buffers = {}
+VEL_BUFFER_SIZE = 50
+TAXA_AMOSTRAGEM = 100
+# ============================================================
+# VIEW PRINCIPAL
+# ============================================================
 
-@csrf_exempt
-@csrf_exempt
+def dashboard(request):
+    return render(request, 'dashboard.html')
+
+# ============================================================
+# RECEBIMENTO DE DADOS DO ESP32 (VERSÃO CORRIGIDA)
+# ============================================================
+
 @csrf_exempt
 def receber_dados_brutos(request):
     """
@@ -37,61 +47,121 @@ def receber_dados_brutos(request):
     try:
         data = json.loads(request.body)
         motor_id = data.get('motor_id')
+        temperatura = float(data.get('temperatura', 0))
+        vibX = float(data.get('vibX', 0))
+        vibY = float(data.get('vibY', 0))
+        vibZ = float(data.get('vibZ', 0))
         
         # 1. Verifica se o motor existe no banco
-        motor_instancia = get_object_or_404(Motor, id=motor_id)
-
-        # 2. Captura os dados brutos do JSON
-        temp = float(data.get('temp', 0))
-        raw_x = data.get('x', [])
+        motor = Motor.objects.filter(id=motor_id).first()
+        if not motor:
+            return JsonResponse({'erro': 'Motor não encontrado'}, status=404)
         
-        # Cálculo simples de RMS (ajuste conforme sua lógica de FFT se necessário)
-        if isinstance(raw_x, list) and len(raw_x) > 0:
-            np_x = np.array(raw_x)
-            valor_rms = np.sqrt(np.mean(np_x**2))
+        # 2. Gestão de Buffers
+        motor_id_str = str(motor_id)  # CONVERTE PARA STRING
+        if motor_id_str not in buffers:
+            buffers[motor_id_str] = {
+            'x': deque(maxlen=BUFFER_SIZE),
+            'y': deque(maxlen=BUFFER_SIZE),
+            'z': deque(maxlen=BUFFER_SIZE),
+            'tempo': deque(maxlen=BUFFER_SIZE)
+    }
+            
+        
+        buffers[motor_id_str]['x'].append(vibX)
+        buffers[motor_id_str]['y'].append(vibY)
+        buffers[motor_id_str]['z'].append(vibZ)
+        buffers[motor_id_str]['tempo'].append(datetime.now().timestamp())
+        
+        # 3. Cálculos Técnicos
+        rms_aceleracao = math.sqrt((vibX**2 + vibY**2 + vibZ**2) / 3)
+        pico = max(abs(vibX), abs(vibY), abs(vibZ))
+        crest_factor = pico / rms_aceleracao if rms_aceleracao > 0 else 0
+        
+        amostras = [vibX, vibY, vibZ]
+        kurtosis = stats.kurtosis(amostras, fisher=True) if np.std(amostras) > 0 else 0
+
+
+         # SEVERIDADE DASHBOARD PRINCIPAL 
+        # Cálculo de Velocidade RMS (mm/s) para severidade ISO
+        freq_trabalho = motor.frequencia if motor.frequencia else 60
+        vel_rms = rms_aceleracao * 9.81 / (2 * math.pi * freq_trabalho) * 1000
+        score = 0  # 0=Normal, 1=Alerta, 2=Crítico
+       # Critério 1: Velocidade RMS
+        if vel_rms >= 4.5:
+         score = 2
+        elif vel_rms >= 2.8:
+         score = max(score, 1)
+
+         # Critério 2: Crest Factor
+        if crest_factor > 5.0:
+         score = max(score, 2)
+        elif crest_factor >= 3.0:
+         score = max(score, 1)
+ 
+         # Critério 3: Kurtosis
+        if kurtosis > 8.0:
+         score = max(score, 2)
+        elif kurtosis >= 3.0:
+         score = max(score, 1) 
+       
+        # Atribuir resultados (USANDO AS MESMAS VARIÁVEIS DO ORIGINAL)
+        if score >= 2:
+         severidade = "Perigosa"
+         rec = "PARAR EQUIPAMENTO IMEDIATAMENTE"
+        elif score >= 1:
+         severidade = "Insatisfatória"
+         rec = "Planejar manutenção"
         else:
-            valor_rms = float(data.get('rms', 0))
+         severidade = "Boa"
+         rec = "Operação normal"
 
-        # 3. SALVA NO BANCO DE DADOS (Isso cria o histórico automático)
-        Leitura.objects.create(
-            motor=motor_instancia,
-            temperatura=temp,
-            rms=valor_rms,
-            vibX=float(np.mean(raw_x) if raw_x else 0),
-            # adicione vibY e vibZ se o seu sensor enviar
-        )
+        # 5. WhatsApp Alerts
+        limite_rms = motor.limite_alerta if hasattr(motor, 'limite_alerta') else 4.5
+        limite_kurt = motor.limite_kurtosis if hasattr(motor, 'limite_kurtosis') else 3.5
 
-        # 4. Alimenta o Buffer em memória (para o gráfico de FFT de tempo real)
-        m_id_str = str(motor_id)
-        if m_id_str not in buffers:
-            buffers[m_id_str] = {'x': [], 'y': [], 'z': []}
+        if vel_rms > limite_rms or kurtosis > limite_kurt:
+            agora = timezone.now()
+            if not motor.ultimo_alerta_enviado or agora > motor.ultimo_alerta_enviado + timedelta(minutes=30):
+                if vel_rms > limite_rms:
+                    motivo = f"Energia Elevada (RMS: {vel_rms:.2f} mm/s)"
+                else:
+                    motivo = f"Impacto Detectado (Kurtosis: {kurtosis:.2f})"
+                
+                enviar_alerta_whatsapp(
+                    motor.nome, 
+                    f"RMS: {vel_rms:.2f} / Kurt: {kurtosis:.2f}", 
+                    motivo
+                )
+                motor.ultimo_alerta_enviado = agora
+                motor.save()
         
-        if isinstance(raw_x, list):
-            buffers[m_id_str]['x'].extend(raw_x)
-            # Mantém apenas as últimas amostras do BUFFER_SIZE
-            while len(buffers[m_id_str]['x']) > BUFFER_SIZE:
-                buffers[m_id_str]['x'].pop(0)
-
+        # 6. Salva no Banco
+        leitura = Leitura.objects.create(
+            motor=motor,
+            temperatura=round(temperatura, 1),
+            vibX=round(vibX, 3),
+            vibY=round(vibY, 3),
+            vibZ=round(vibZ, 3),
+            rms=round(rms_aceleracao, 3),
+            crest=round(crest_factor, 2)
+        )
+        
         return JsonResponse({
-            'status': 'sucesso', 
-            'motor': motor_instancia.nome,
-            'historico': 'gravado'
+            'status': 'ok',
+            'id': leitura.id,
+            'calculos': {
+                'aceleracao_rms': round(rms_aceleracao, 3),
+                'velocidade_mm_s': round(vel_rms, 2),
+                'kurtosis': round(kurtosis, 2),
+                'severidade': severidade,
+                'recomendacao': rec,
+                'alerta': (vel_rms > limite_rms or kurtosis > limite_kurt)
+            }
         }, status=201)
 
     except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=400)
-
-# ========== BUFFERS EM MEMÓRIA ==========
-# Estes buffers são limpos no deploy, mas as calibrações (offsets) 
-# que estão no banco de dados agora são PERMANENTES.
-buffers = {}
-BUFFER_SIZE = 64
-
-vel_buffers = {}
-VEL_BUFFER_SIZE = 50
-
-def dashboard(request):
-    return render(request, 'dashboard.html')
+        return JsonResponse({'erro': str(e)}, status=500)
 
 # ============================================================
 # GESTÃO DE OFFSETS (PERSISTÊNCIA NO BANCO DE DADOS)
@@ -107,7 +177,6 @@ def salvar_offset(request):
         
         motor_instancia = get_object_or_404(Motor, id=m_id)
         
-        # O Django gerencia a atualização ou criação no Postgres automaticamente
         obj, created = MotorCalibration.objects.update_or_create(
             motor=motor_instancia,
             defaults={
@@ -157,117 +226,10 @@ def listar_offsets(request):
         return JsonResponse({'erro': str(e)}, status=500)
 
 # ============================================================
-# PROCESSAMENTO DE DADOS VIBRATÓRIOS
+# DADOS PARA DASHBOARD
 # ============================================================
 
-@csrf_exempt
-@csrf_exempt
-def receber_dados_brutos(request):
-    if request.method != 'POST':
-        return JsonResponse({'erro': 'somente POST'}, status=405)
-    try:
-        data = json.loads(request.body)
-        motor_id = data.get('motor_id')
-        temperatura = float(data.get('temperatura', 0))
-        vibX = float(data.get('vibX', 0))
-        vibY = float(data.get('vibY', 0))
-        vibZ = float(data.get('vibZ', 0))
-        
-        motor = Motor.objects.filter(id=motor_id).first()
-        if not motor:
-            return JsonResponse({'erro': 'Motor não encontrado'}, status=404)
-        
-        # --- Gestão de Buffers ---
-        if motor_id not in buffers:
-            buffers[motor_id] = {
-                'x': deque(maxlen=BUFFER_SIZE),
-                'y': deque(maxlen=BUFFER_SIZE),
-                'z': deque(maxlen=BUFFER_SIZE),
-                'tempo': deque(maxlen=BUFFER_SIZE)
-            }
-        
-        buffers[motor_id]['x'].append(vibX)
-        buffers[motor_id]['y'].append(vibY)
-        buffers[motor_id]['z'].append(vibZ)
-        buffers[motor_id]['tempo'].append(datetime.now().timestamp())
-        
-        # --- Cálculos Técnicos ---
-        rms_aceleracao = math.sqrt((vibX**2 + vibY**2 + vibZ**2) / 3)
-        pico = max(abs(vibX), abs(vibY), abs(vibZ))
-        crest_factor = pico / rms_aceleracao if rms_aceleracao > 0 else 0
-        
-        amostras = [vibX, vibY, vibZ]
-        kurtosis = stats.kurtosis(amostras, fisher=True) if np.std(amostras) > 0 else 0
-        
-        # Cálculo de Velocidade RMS (mm/s) para severidade ISO
-        vel_rms = rms_aceleracao * 9.81 / (2 * math.pi * 60) * 1000
-
-        # --- Lógica de Severidade Visual ---
-        if vel_rms < 1.0: severidade, rec = "Boa", "Operação normal"
-        elif vel_rms < 2.8: severidade, rec = "Aceitável", "Monitorar tendência"
-        elif vel_rms < 4.5: severidade, rec = "Insatisfatória", "Planejar manutenção"
-        else: severidade, rec = "Perigosa", "PARAR EQUIPAMENTO IMEDIATAMENTE"
-
-        # ============================================================
-        # WHATSAPP DINÂMICO (RMS + KURTOSIS)
-        # ============================================================
-        limite_rms = motor.limite_alerta
-        # Usamos 3.5 como padrão para Kurtosis se não estiver no banco
-        limite_kurt = motor.limite_kurtosis if hasattr(motor, 'limite_kurtosis') else 3.5
-
-        if vel_rms > limite_rms or kurtosis > limite_kurt:
-            agora = timezone.now()
-            
-            # Trava de segurança de 30 minutos
-            if not motor.ultimo_alerta_enviado or agora > motor.ultimo_alerta_enviado + timedelta(minutes=30):
-                
-                # Define o motivo detalhado para a mensagem
-                if vel_rms > limite_rms:
-                    motivo = f"Energia Elevada (RMS: {vel_rms:.2f} mm/s)"
-                else:
-                    motivo = f"Impacto Detectado (Kurtosis: {kurtosis:.2f})"
-                
-                enviar_alerta_whatsapp(
-                    motor.nome, 
-                    f"RMS: {vel_rms:.2f} / Kurt: {kurtosis:.2f}", 
-                    motivo
-                )
-                
-                motor.ultimo_alerta_enviado = agora
-                motor.save()
-        # ============================================================
-        
-        leitura = Leitura.objects.create(
-            motor=motor,
-            temperatura=round(temperatura, 1),
-            vibX=round(vibX, 3),
-            vibY=round(vibY, 3),
-            vibZ=round(vibZ, 3),
-            rms=round(rms_aceleracao, 3),
-            crest=round(crest_factor, 2)
-        )
-        
-        return JsonResponse({
-            'status': 'ok',
-            'id': leitura.id,
-            'calculos': {
-                'aceleracao_rms': round(rms_aceleracao, 3),
-                'velocidade_mm_s': round(vel_rms, 2),
-                'kurtosis': round(kurtosis, 2),
-                'severidade': severidade,
-                'recomendacao': rec,
-                'alerta': (vel_rms > limite_rms or kurtosis > limite_kurt)
-            }
-        }, status=201)
-
-    except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
-
 def dados_json(request):
-    """
-    Retorna dados BRUTOS para o dashboard principal (tempo real).
-    Últimas 50 leituras.
-    """
     motor_id = request.GET.get('motor_id')
     
     if motor_id:
@@ -289,16 +251,11 @@ def dados_json(request):
     return JsonResponse(lista, safe=False)
 
 def dados_historico_hora_json(request):
-    """
-    Retorna dados AGRUPADOS POR HORA para a página de Histórico.
-    Médias, máximos, mínimos de cada hora.
-    """
     motor_id = request.GET.get('motor_id')
     
     if not motor_id:
         return JsonResponse([], safe=False)
     
-    # Agrupa por hora
     dados_agrupados = Leitura.objects.filter(
         motor_id=motor_id
     ).annotate(
@@ -313,7 +270,7 @@ def dados_historico_hora_json(request):
         vibY_medio=Avg('vibY'),
         vibZ_medio=Avg('vibZ'),
         total_leituras=Count('id')
-    ).order_by('-hora')[:168]  # últimas 168 horas (7 dias)
+    ).order_by('-hora')[:168]
     
     lista = []
     for item in reversed(dados_agrupados):
@@ -336,10 +293,6 @@ def dados_historico_hora_json(request):
     return JsonResponse(lista, safe=False)
 
 def dados_brutos_json(request):
-    """
-    Retorna dados BRUTOS (últimas 100 leituras) para diagnóstico.
-    Use em uma rota separada: /api/dados_brutos/
-    """
     motor_id = request.GET.get('motor_id')
     dados = Leitura.objects.filter(motor_id=motor_id).order_by('-id')[:100] if motor_id else Leitura.objects.all().order_by('-id')[:100]
     
@@ -358,39 +311,65 @@ def dados_brutos_json(request):
 # ============================================================
 # ANÁLISE FFT E SKF COMPLETA
 # ============================================================
+
 def get_analise_completa(request, motor_id):
     try:
         motor = get_object_or_404(Motor, id=motor_id)
         
-        # Tentamos buscar o ID tanto como número quanto como string para não ter erro
-        m_id = motor_id
-        if m_id not in buffers and str(m_id) in buffers:
-            m_id = str(m_id)
-
-        if m_id not in buffers or len(buffers[m_id]['x']) < BUFFER_SIZE:
-            return JsonResponse({'erro': 'Aguardando mais amostras...'}, status=400)
+        m_id = str(motor_id)
         
+        # VERIFICA SE TEM AMOSTRAS SUFICIENTES
+        if m_id not in buffers or len(buffers[m_id]['x']) < BUFFER_SIZE:
+            return JsonResponse({
+                'erro': f'Aguardando {len(buffers[m_id]["x"]) if m_id in buffers else 0}/{BUFFER_SIZE} amostras para FFT...'
+            }, status=400)
+        
+        # Remove DC component (média) e aplica janela Hanning
         x_data = np.array(buffers[m_id]['x']) - np.mean(buffers[m_id]['x'])
         window = np.hanning(BUFFER_SIZE)
+        dados_janelados = x_data * window
         
-        # FFT e Frequência Dominante
-        fs = 10 
+        # CALCULA FFT
+        fs = TAXA_AMOSTRAGEM
         freqs = fftfreq(BUFFER_SIZE, 1/fs)[:BUFFER_SIZE//2]
-        fft_x = np.abs(fft(x_data * window))[:BUFFER_SIZE//2]
-        freq_dominante = freqs[np.argmax(fft_x)]
+        fft_x = np.abs(fft(dados_janelados))[:BUFFER_SIZE//2]
         
-        # Lógica ISO 10816 e RPM (Sua inteligência nova)
-        hz_fundamental = motor.rpm / 60 if motor.rpm else 0
-        limite_alerta = 1.8 if (motor.cv and motor.cv <= 20) else 2.8
+        # 🔥 CORREÇÃO: Encontra frequência dominante (ignorando DC e ruído muito baixo)
+        # Ignora frequências abaixo de 1 Hz (evita pegar componente DC)
+        indices_validos = np.where(freqs >= 1.0)[0]
+        if len(indices_validos) == 0 or len(fft_x) == 0:
+            freq_dominante = 0
+        else:
+            fft_validas = fft_x[indices_validos]
+            freq_validas = freqs[indices_validos]
+            idx_max = np.argmax(fft_validas)
+            freq_dominante = freq_validas[idx_max]
         
+        # MÉTRICAS BÁSICAS
         rms_total = np.sqrt(np.mean(x_data**2))
-        vel_rms = rms_total * 9.81 / (2 * math.pi * 60) * 1000
+        freq_trabalho = motor.frequencia if motor.frequencia else 60
+        vel_rms = rms_total * 9.81 / (2 * math.pi * freq_trabalho) * 1000
         kurtosis_val = stats.kurtosis(x_data, fisher=True)
         pico = np.max(np.abs(x_data))
         crest_factor = pico / rms_total if rms_total > 0 else 0
         
-        cond_rolamento = "Falha - Inspecionar" if kurtosis_val > 3 else "Normal"
-        cond_mancal = "Desalinhamento Provável" if (np.sum(fft_x) > 50) else "Normal"
+        # DIAGNÓSTICOS
+        cond_rolamento = "Falha - Inspecionar" if kurtosis_val > 3.0 else "Normal"
+        cond_mancal = "Desalinhamento Provável" if (np.sum(fft_x[1:10]) > 50) else "Normal"
+        
+        # SEVERIDADE (baseado na velocidade RMS)
+        if vel_rms >= 4.5:
+            severidade_texto = "CRÍTICO"
+            cor = "#e74c3c"
+            diagnostico_msg = "⚠️ CRÍTICO - Parar equipamento imediatamente!"
+        elif vel_rms >= 2.8:
+            severidade_texto = "ALERTA"
+            cor = "#f39c12"
+            diagnostico_msg = "⚠️ ALERTA - Planejar manutenção"
+        else:
+            severidade_texto = "NORMAL"
+            cor = "#2ecc71"
+            diagnostico_msg = "✅ NORMAL - Operação segura"
 
         return JsonResponse({
             'analise_basica': {
@@ -398,12 +377,15 @@ def get_analise_completa(request, motor_id):
                 'rms_mm_s': round(vel_rms, 2),
                 'kurtosis': round(kurtosis_val, 3),
                 'crest_factor': round(crest_factor, 2),
-                'freq_dominante': round(float(freq_dominante), 1)
+                'freq_dominante': round(float(freq_dominante), 1) if freq_dominante > 0 else 0
             },
             'diagnostico': {
                 'condicao_rolamento': cond_rolamento,
                 'condicao_mancal': cond_mancal,
-                'alerta': "ALERTA" if vel_rms > limite_alerta else "NORMAL"
+                'alerta': severidade_texto,
+                'severidade': severidade_texto,
+                'mensagem': diagnostico_msg,
+                'cor': cor
             }
         })
     except Exception as e:
@@ -411,46 +393,64 @@ def get_analise_completa(request, motor_id):
 
 def get_fft_data(request, motor_id):
     try:
-        m_id = motor_id
-        if m_id not in buffers and str(m_id) in buffers:
-            m_id = str(m_id)
-
-        if m_id not in buffers or len(buffers[m_id]['x']) < BUFFER_SIZE:
-            return JsonResponse({'fft_data': []})
-
-        x_data = np.array(buffers[m_id]['x']) - np.mean(buffers[m_id]['x'])
-        fft_res = np.abs(fft(x_data * np.hanning(len(x_data))))[:BUFFER_SIZE//2]
-        freqs = fftfreq(BUFFER_SIZE, 1/10)[:BUFFER_SIZE//2]
-
-        # VOLTANDO AO FORMATO ORIGINAL (Lista de dicionários)
-        dados_fft = [{'freq': round(f, 1), 'amp': round(a, 5)} for f, a in zip(freqs, fft_res) if f <= 50]
-        return JsonResponse({'fft_data': dados_fft})
-    except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
-    
-def get_fft_data(request, motor_id):
-    try:
-        # Garante que o ID seja tratado como string para buscar no buffer
         m_id = str(motor_id)
         
+        # VERIFICA SE TEM AMOSTRAS SUFICIENTES
         if m_id not in buffers or len(buffers[m_id]['x']) < BUFFER_SIZE:
-            return JsonResponse({'labels': [], 'amplitudes': []})
+            return JsonResponse({
+                'labels': [], 
+                'amplitudes': [], 
+                'status': 'aguardando',
+                'mensagem': f'Aguardando {len(buffers[m_id]["x"]) if m_id in buffers else 0}/{BUFFER_SIZE} amostras para gerar FFT...'
+            })
         
-        # Prepara os dados (Removendo nível DC e aplicando Janela de Hanning)
+        # Remove DC component (média)
         x_data = np.array(buffers[m_id]['x']) - np.mean(buffers[m_id]['x'])
-        window = np.hanning(BUFFER_SIZE)
         
-        # Cálculo da FFT
-        fft_res = np.abs(fft(x_data * window))[:BUFFER_SIZE//2]
-        fs = 10 # Frequência de amostragem
+        # Aplica janela Hanning para reduzir vazamento espectral
+        window = np.hanning(BUFFER_SIZE)
+        dados_janelados = x_data * window
+        
+        # CALCULA FFT
+        fft_completa = fft(dados_janelados)
+        fft_res = np.abs(fft_completa)[:BUFFER_SIZE//2]  # Pega só metade (simétrica)
+        
+        # CALCULA FREQUÊNCIAS
+        fs = TAXA_AMOSTRAGEM
         freqs = fftfreq(BUFFER_SIZE, 1/fs)[:BUFFER_SIZE//2]
-
+        
+        # 🔥 LIMITA PARA FREQUÊNCIAS RELEVANTES (até 50 Hz para motores)
+        # Motores típicos operam entre 0-50 Hz (0-3000 RPM)
+        limite_freq = 50
+        indices = np.where(freqs <= limite_freq)[0]
+        
+        # Pega apenas os pontos dentro do limite
+        labels = [round(freqs[i], 1) for i in indices]
+        amplitudes = [round(fft_res[i], 5) for i in indices]
+        
+        # Encontra a amplitude máxima para debug (opcional)
+        max_amplitude = max(amplitudes) if amplitudes else 0
+        freq_max = labels[amplitudes.index(max_amplitude)] if amplitudes and max_amplitude > 0 else 0
+        
         return JsonResponse({
-            'labels': [round(f, 1) for f in freqs],
-            'amplitudes': [round(a, 5) for a in fft_res]
+            'labels': labels,
+            'amplitudes': amplitudes,
+            'status': 'ok',
+            'info': {
+                'total_amostras': BUFFER_SIZE,
+                'frequencia_max_hz': freq_max,
+                'amplitude_max': round(max_amplitude, 5),
+                'taxa_amostragem': fs
+            }
         })
+        
     except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
+        return JsonResponse({
+            'labels': [], 
+            'amplitudes': [], 
+            'status': 'erro',
+            'erro': str(e)
+        }, status=500)
 
 # ============================================================
 # CRUD DE MOTORES
@@ -458,12 +458,13 @@ def get_fft_data(request, motor_id):
 
 def motores_listar(request):
     motores = Motor.objects.all().order_by('id')
-    lista = [{'id': m.id, 'nome': m.nome, 'marca': m.marca, 'rpm': m.rpm, 'cv': m.cv} for m in motores]
+    lista = [{'id': m.id, 'nome': m.nome, 'marca': m.marca, 'rpm': m.rpm, 'cv': m.cv, 'frequencia': m.frequencia} for m in motores]
     return JsonResponse(lista, safe=False)
 
 @csrf_exempt
 def motor_criar(request):
-    if request.method != 'POST': return JsonResponse({'erro': 'metodo negado'}, status=405)
+    if request.method != 'POST': 
+        return JsonResponse({'erro': 'metodo negado'}, status=405)
     data = json.loads(request.body)
     motor = Motor.objects.create(
         id=data.get('id_desejado'),
@@ -477,7 +478,7 @@ def motor_criar(request):
 
 def motor_obter(request, motor_id):
     m = get_object_or_404(Motor, id=motor_id)
-    return JsonResponse({'id': m.id, 'nome': m.nome, 'marca': m.marca, 'rpm': m.rpm})
+    return JsonResponse({'id': m.id, 'nome': m.nome, 'marca': m.marca, 'rpm': m.rpm, 'frequencia': m.frequencia, 'cv': m.cv})
 
 @csrf_exempt
 def motor_excluir(request, motor_id):
@@ -487,8 +488,10 @@ def motor_excluir(request, motor_id):
 
 def ultimo_motor(request):
     m = Motor.objects.last()
-    if not m: return JsonResponse({'erro': 'vazio'}, status=404)
+    if not m: 
+        return JsonResponse({'erro': 'vazio'}, status=404)
     return JsonResponse({'id': m.id, 'nome': m.nome})
+
 @csrf_exempt
 def motor_atualizar(request, motor_id):
     if request.method != 'PUT':
@@ -496,7 +499,6 @@ def motor_atualizar(request, motor_id):
 
     try:
         data = json.loads(request.body)
-
         motor = get_object_or_404(Motor, id=motor_id)
 
         motor.nome = data.get('nome', motor.nome)
@@ -506,37 +508,25 @@ def motor_atualizar(request, motor_id):
         motor.frequencia = float(data.get('frequencia', motor.frequencia))
 
         motor.save()
-
         return JsonResponse({'status': 'ok', 'mensagem': 'Motor atualizado'})
 
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
-    
-    from django.contrib.auth.models import User
-from django.http import HttpResponse
+
+# ============================================================
+# UTILITÁRIOS
+# ============================================================
 
 def resetar_tudo_emergencia(request):
-    # 1. Cria ou reseta o usuário 'admin'
     u, created = User.objects.get_or_create(username='admin')
-    u.set_password('')
+    u.set_password('admin123')
     u.is_superuser = True
     u.is_staff = True
     u.save()
     
-    # 2. Destrava o alerta do WhatsApp (limpa o tempo)
-    from .models import Motor
     Motor.objects.all().update(ultimo_alerta_enviado=None)
     
-    return HttpResponse("<h1>Sucesso!</h1><p>Usuário 'admin' resetado para senha 'teste123' e WhatsApp destravado.</p>")
-
-
-import csv
-from django.http import HttpResponse
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Avg # Importante para calcular a média
-from django.db.models.functions import TruncHour # Importante para agrupar por hora
-from .models import Leitura
+    return HttpResponse("<h1>Sucesso!</h1><p>Usuário 'admin' resetado para senha 'admin123' e WhatsApp destravado.</p>")
 
 def exportar_dados_csv(request):
     try:
@@ -549,13 +539,11 @@ def exportar_dados_csv(request):
 
         writer = csv.writer(response, delimiter=';')
         
-        # 1. BUSCA E AGRUPAMENTO (DADOS DO GRÁFICO)
-        # O TruncHour agrupa todas as leituras de uma mesma hora em um único ponto
         dados_agrupados = Leitura.objects.filter(
             motor_id=motor_id,
             data__gte=vinte_quatro_horas_atras
         ).annotate(
-            hora=TruncHour('data') # Cria um campo temporário 'hora' (ex: 10:00, 11:00)
+            hora=TruncHour('data')
         ).values('hora').annotate(
             temp_media=Avg('temperatura'),
             rms_medio=Avg('rms'),
@@ -564,9 +552,6 @@ def exportar_dados_csv(request):
             vibZ_media=Avg('vibZ')
         ).order_by('hora')
 
-        # 2. ESCRITA NO CSV (ESTRUTURA VERTICAL AGRUPADA)
-        
-        # --- BLOCO TEMPERATURA ---
         writer.writerow(['--- TEMPERATURA MÉDIA POR HORA (24H) ---'])
         writer.writerow(['Horário', 'Média (°C)'])
         for ponto in dados_agrupados:
@@ -575,9 +560,8 @@ def exportar_dados_csv(request):
                 str(round(ponto['temp_media'], 2)).replace('.', ',')
             ])
         
-        writer.writerow([]) # Espaço
-
-        # --- BLOCO RMS ---
+        writer.writerow([])
+        
         writer.writerow(['--- RMS MÉDIO POR HORA (24H) ---'])
         writer.writerow(['Horário', 'Média (m/s²)'])
         for ponto in dados_agrupados:
@@ -590,3 +574,88 @@ def exportar_dados_csv(request):
 
     except Exception as e:
         return HttpResponse(f"Erro ao gerar dados do gráfico: {e}", status=500)
+    
+
+from django.shortcuts import render
+from .models import Motor
+
+def status_motores(request):
+    motores = Motor.objects.all()
+    return render(request, 'status_motores.html', {'motores': motores})
+
+from django.shortcuts import render
+from .models import Motor, Leitura
+
+def status_motores(request):
+    motores = Motor.objects.all()
+
+    motores_com_dados = []
+
+    for motor in motores:
+        ultima_leitura = Leitura.objects.filter(motor=motor).order_by('-data').first()
+
+        motores_com_dados.append({
+            'motor': motor,
+            'leitura': ultima_leitura
+        })
+
+    return render(request, 'status_motores.html', {
+        'motores': motores_com_dados
+    })
+
+from django.shortcuts import render
+from .models import Motor
+
+def status_motores(request):
+    motores = Motor.objects.all()
+    return render(request, 'status_motores.html', {'motores': motores})
+
+def verificar_status_motor(request, motor_id):
+    """
+    Verifica se o motor está enviando dados ativamente
+    Retorna status baseado na última leitura recebida
+    """
+    try:
+        motor = get_object_or_404(Motor, id=motor_id)
+        
+        # Busca a última leitura
+        ultima_leitura = Leitura.objects.filter(motor=motor).order_by('-data').first()
+        
+        if not ultima_leitura:
+            return JsonResponse({
+                'status': 'sem_dados',
+                'online': False,
+                'conectado': False,
+                'ultima_leitura': None,
+                'segundos_desde_ultima': None,
+                'mensagem': 'Nenhuma leitura recebida ainda'
+            })
+        
+        # Calcula o tempo desde a última leitura
+        agora = timezone.now()
+        tempo_desde_ultima = (agora - ultima_leitura.data).total_seconds()
+        
+        # Define 60 segundos como timeout para considerar desconectado
+        TIMEOUT_SEGUNDOS = 15
+        
+        if tempo_desde_ultima > TIMEOUT_SEGUNDOS:
+            return JsonResponse({
+                'status': 'desconectado',
+                'online': False,
+                'conectado': False,
+                'ultima_leitura': ultima_leitura.data.isoformat(),
+                'segundos_desde_ultima': int(tempo_desde_ultima),
+                'mensagem': f'ESP desconectado há {int(tempo_desde_ultima)} segundos'
+            })
+        else:
+            return JsonResponse({
+                'status': 'conectado',
+                'online': True,
+                'conectado': True,
+                'ultima_leitura': ultima_leitura.data.isoformat(),
+                'segundos_desde_ultima': int(tempo_desde_ultima),
+                'mensagem': f'ESP conectado - última leitura há {int(tempo_desde_ultima)}s'
+            })
+            
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)

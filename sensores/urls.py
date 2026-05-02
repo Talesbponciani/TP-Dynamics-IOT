@@ -9,8 +9,11 @@ urlpatterns = [
     path('api/receber/', views.receber_dados_brutos, name='receber_dados'),
     path('api/receber_bruto/', views.receber_dados_brutos, name='receber_dados_brutos'),
     
-    # --- ROTA DE EXPORTAÇÃO ADICIONADA AQUI ---
+    # --- ROTA DE EXPORTAÇÃO ---
     path('exportar-dados/', views.exportar_dados_csv, name='exportar_dados'),
+    
+    # 🆕 ROTA DE STATUS DE CONEXÃO
+    path('api/status/<int:motor_id>/', views.verificar_status_motor, name='status_motor'),
     
     # APIs de análise
     path('api/analise/<int:motor_id>/', views.get_analise_completa, name='analise_completa'),
@@ -32,4 +35,6 @@ urlpatterns = [
     # APIs de histórico
     path('api/dados_brutos/', views.dados_brutos_json, name='dados_brutos'),
     path('api/dados_historico_hora/', views.dados_historico_hora_json, name='dados_historico_hora'),
+
+    path('status-motores/', views.status_motores, name='status_motores'),
 ]
